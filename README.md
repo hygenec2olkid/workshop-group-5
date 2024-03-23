@@ -10,7 +10,19 @@ KBazaar - Online Shopping Application (Workshop)
 1. Clone this repository
 2. cd to `kbazaar` directory and run `make setup` (if not working you can run pre-commit manually)
 3. Run `make test` to run unit tests
-4. Run `make run` to start the application
+4. Run `make test-it` to run integration tests
+5. Run `make run` to start the application
+
+## Troubleshooting
+
+### ใช้ colima แทน Docker
+เพิ่ม environment variables ต่อไปนี้ใน `.env` file
+
+```shell
+export DOCKER_HOST="unix://${HOME}/.colima/default/docker.sock"
+export TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE="/var/run/docker.sock"
+export TESTCONTAINERS_RYUK_DISABLED=true
+```
 
 ## API Documentation
 - Swagger UI: [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)
