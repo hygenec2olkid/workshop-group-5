@@ -9,6 +9,8 @@ clean:
 	./gradlew clean
 
 run:
+	docker-compose down
+	docker-compose up -d
 	./gradlew bootRun
 
 test:
