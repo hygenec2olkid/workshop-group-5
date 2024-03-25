@@ -62,6 +62,16 @@ public class ProductControllerTest {
     }
 
     @Test
+    @DisplayName("should get error 400 bad request")
+    public void ShouldGetError400BadRequest() throws Exception {
+
+        mockMvc.perform(
+                        get("/api/v1/products?page=-1&limit=-1")
+                                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     @DisplayName("should return product")
     public void shouldReturnProduct() throws Exception {
         // Given

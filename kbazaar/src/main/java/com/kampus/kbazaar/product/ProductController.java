@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import jakarta.validation.constraints.Positive;
 import java.util.List;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,7 +38,8 @@ public class ProductController {
                             schema = @Schema(implementation = NotFoundException.class)))
     @GetMapping("/products")
     public List<ProductResponse> getProducts(
-            @RequestParam(value = "page") int page, @RequestParam(value = "limit") int limit) {
+            @RequestParam(value = "page") @Positive(message = "page should more than 0") int page,
+            @RequestParam(value = "limit") @Positive(message = "limit should morn than 0") int limit) {
         return productService.getProductWithPagination(page, limit);
     }
 
