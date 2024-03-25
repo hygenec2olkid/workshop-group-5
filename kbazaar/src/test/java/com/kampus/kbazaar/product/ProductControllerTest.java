@@ -46,14 +46,19 @@ public class ProductControllerTest {
     @DisplayName("should return all product")
     public void shouldReturnAllProduct() throws Exception {
         // Given
+        int mockPage = 1;
+        int mockLimit = 1000;
 
         // When & Then
-        when(productService.getAll()).thenReturn(new ArrayList<>());
+        when(productService.getProductWithPagination(mockPage, mockLimit))
+                .thenReturn(new ArrayList<>());
 
-        mockMvc.perform(get("/api/v1/products").contentType(MediaType.APPLICATION_JSON))
+        mockMvc.perform(
+                        get("/api/v1/products?page=1&limit=1000")
+                                .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
 
-        verify(productService, times(1)).getAll();
+        verify(productService, times(1)).getProductWithPagination(mockPage, mockLimit);
     }
 
     @Test
