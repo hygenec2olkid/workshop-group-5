@@ -1,10 +1,12 @@
 package com.kampus.kbazaar.cart;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.kampus.kbazaar.security.JwtAuthFilter;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -41,5 +43,36 @@ public class CartControllerTest {
     public void getCart_ReturnsOk() throws Exception {
         mockMvc.perform(get("/api/v1/carts").contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("should return status 200 after add product in cart")
+    public void shouldReturnOkStatusAfterAddProduct() throws Exception {
+        String requestBody =
+                """
+                {
+                      "productSku": 1,
+                      "quantity": 2
+                  }""";
+        mockMvc.perform(
+                        post("/api/v1/carts/mockUsername/items")
+                                .content(requestBody)
+                                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    @DisplayName("should return status 400 if product detail is invalid")
+    public void shouldReturnBadRequestStatus() throws Exception {
+        String requestBody =
+                """
+                {
+                      "productSku": 1,
+                  }""";
+        mockMvc.perform(
+                        post("/api/v1/carts/mockUsername/items")
+                                .content(requestBody)
+                                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
     }
 }
