@@ -1,11 +1,13 @@
 package com.kampus.kbazaar.product;
 
+import com.kampus.kbazaar.cart.CartItem;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -39,6 +41,9 @@ public class Product {
     @NotNull @PositiveOrZero
     @Column(name = "quantity", nullable = false)
     private Integer quantity;
+
+    @OneToMany(mappedBy = "product")
+    private List<CartItem> cartItemList;
 
     public ProductResponse toResponse() {
         return new ProductResponse(this.id, this.name, this.sku, this.price, this.quantity);

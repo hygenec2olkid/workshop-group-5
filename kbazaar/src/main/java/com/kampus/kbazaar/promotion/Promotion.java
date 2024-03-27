@@ -1,5 +1,6 @@
 package com.kampus.kbazaar.promotion;
 
+import com.kampus.kbazaar.cart.Cart;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -53,6 +54,9 @@ public class Promotion {
 
     @Column(name = "free_quantity")
     private Integer freeQuantity;
+
+    @OneToMany(mappedBy = "promotion")
+    private List<Cart> carts;
 
     public PromotionResponse toResponse() {
         return new PromotionResponse(

@@ -3,6 +3,7 @@ package com.kampus.kbazaar.shopper;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import com.kampus.kbazaar.cart.Cart;
 import com.kampus.kbazaar.exceptions.NotFoundException;
 import java.util.Arrays;
 import java.util.List;
@@ -29,8 +30,11 @@ class ShopperServiceTest {
     @DisplayName("should be able to get all shoppers")
     void getAll_ShouldReturnListOfShoppers() {
         // Mock data
-        Shopper shopper1 = new Shopper(1L, "TechNinja", "techninja@example.com");
-        Shopper shopper2 = new Shopper(2L, "CodeMaster", "codemaster@example.com");
+        Cart cart1 = new Cart();
+        Cart cart2 = new Cart();
+
+        Shopper shopper1 = new Shopper(1L, "TechNinja", "techninja@example.com", cart1);
+        Shopper shopper2 = new Shopper(2L, "CodeMaster", "codemaster@example.com", cart2);
         List<Shopper> shoppers = Arrays.asList(shopper1, shopper2);
 
         // Mock repository method
@@ -49,7 +53,8 @@ class ShopperServiceTest {
     @DisplayName("should be able to get shopper by id")
     void getShopperById_ShouldReturnShopper() {
         // Mock data
-        Shopper shopper = new Shopper(1L, "DataGuru", "dataguru@example.com");
+        Cart cart1 = new Cart();
+        Shopper shopper = new Shopper(1L, "DataGuru", "dataguru@example.com", cart1);
 
         // Mock repository method
         when(shopperRepository.findById(1)).thenReturn(Optional.of(shopper));
@@ -75,7 +80,8 @@ class ShopperServiceTest {
     @DisplayName("should be able to get shopper by username")
     void getShopperByUsername_ShouldReturnShopper() {
         // Mock data
-        Shopper shopper = new Shopper(1L, "DataGuru", "dataguru@example.com");
+        Cart cart1 = new Cart();
+        Shopper shopper = new Shopper(1L, "DataGuru", "dataguru@example.com", cart1);
 
         // Mock repository method
         when(shopperRepository.findByUsername("DataGuru")).thenReturn(Optional.of(shopper));

@@ -41,9 +41,10 @@ class ProductServiceTest {
                         "Google Pixel 5",
                         "MOBILE-GOOGLE-PIXEL-5",
                         new BigDecimal(12990.75),
-                        100);
+                        100,
+                        null);
         Product product2 =
-                new Product(2L, "Coca-Cola", "BEV-COCA-COLA", new BigDecimal(20.75), 150);
+                new Product(2L, "Coca-Cola", "BEV-COCA-COLA", new BigDecimal(20.75), 150, null);
         List<Product> productList = List.of(product1, product2);
 
         // Mock repository method
@@ -71,15 +72,18 @@ class ProductServiceTest {
                         "Google Pixel 5",
                         "MOBILE-GOOGLE-PIXEL-5",
                         new BigDecimal(12990.75),
-                        100);
-        Product product2 = new Product(2L, "OPPO Flip", "OPPO Flip", new BigDecimal(5000.75), 100);
+                        100,
+                        null);
+        Product product2 =
+                new Product(2L, "OPPO Flip", "OPPO Flip", new BigDecimal(5000.75), 100, null);
         Product product3 =
                 new Product(
                         3L,
                         "i-phone 15 pro max",
                         "I-PHONE-15-PRO-Max",
                         new BigDecimal(99990.75),
-                        100);
+                        100,
+                        null);
 
         List<Product> productList = List.of(product1, product2);
         // Mock repository method
@@ -114,7 +118,13 @@ class ProductServiceTest {
     void shouldBeAbleToGetProductBySku() {
         // Mock data
         Product product =
-                new Product(1L, "Pens", "STATIONERY-PEN-BIC-BALLPOINT", new BigDecimal(14.99), 100);
+                new Product(
+                        1L,
+                        "Pens",
+                        "STATIONERY-PEN-BIC-BALLPOINT",
+                        new BigDecimal(14.99),
+                        100,
+                        null);
 
         // Mock repository method
         when(productRepository.findBySku("STATIONERY-PEN-BIC-BALLPOINT"))

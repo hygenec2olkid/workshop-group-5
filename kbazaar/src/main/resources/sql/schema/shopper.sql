@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS shopper (
 
 CREATE TABLE IF NOT EXISTS cart (
 	    id SERIAL PRIMARY KEY,
-    	user_id INT NOT NULL,
+    	user_id INT UNIQUE NOT NULL,
     	discount_id INT,
     	total DECIMAL(10, 2) NOT NULL,
     	discount DECIMAL(10, 2) DEFAULT 0.00,

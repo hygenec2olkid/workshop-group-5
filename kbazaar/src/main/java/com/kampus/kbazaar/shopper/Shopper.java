@@ -1,5 +1,6 @@
 package com.kampus.kbazaar.shopper;
 
+import com.kampus.kbazaar.cart.Cart;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -21,6 +22,9 @@ public class Shopper {
 
     @Column(name = "email")
     private String email;
+
+    @OneToOne(mappedBy = "shopper")
+    private Cart cart;
 
     public ShopperResponse toResponse() {
         return new ShopperResponse(this.id, this.username, this.email);
