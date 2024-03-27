@@ -1,5 +1,6 @@
-package com.kampus.kbazaar.cart;
+package com.kampus.kbazaar.cartItem;
 
+import com.kampus.kbazaar.cart.Cart;
 import com.kampus.kbazaar.product.Product;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -17,12 +18,6 @@ public class CartItem {
     @Column(name = "id")
     private Long id;
 
-    //    @NotNull @Column(name = "cart_session", nullable = false)
-    //    private Long cartSession;
-
-    //    @NotNull @Column(name = "product_id", nullable = false)
-    //    private Long productId;
-
     @ManyToOne
     @JoinColumn(name = "product_id", referencedColumnName = "id")
     private Product product;
@@ -33,8 +28,4 @@ public class CartItem {
 
     @NotNull @Column(name = "quantity", nullable = false)
     private Integer quantity;
-
-    //    @ManyToOne
-    //    @JoinColumn(name = "id",nullable = false)
-    //    private Cart cart;
 }

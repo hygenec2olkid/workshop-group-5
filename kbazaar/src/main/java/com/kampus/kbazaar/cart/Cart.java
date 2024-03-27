@@ -1,5 +1,6 @@
 package com.kampus.kbazaar.cart;
 
+import com.kampus.kbazaar.cartItem.CartItem;
 import com.kampus.kbazaar.promotion.Promotion;
 import com.kampus.kbazaar.shopper.Shopper;
 import jakarta.persistence.*;
@@ -23,19 +24,9 @@ public class Cart {
     @OneToMany(mappedBy = "cart")
     private List<CartItem> cartItemList;
 
-    //    @NotNull @Column(name = "user_id", unique = true, nullable = false)
-    //    private Long userId;
-
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "user_id", referencedColumnName = "id", unique = true)
     private Shopper shopper;
-
-    //    @Column(name = "discount_id")
-    //    private Long discountId;
-
-    //    @OneToOne(fetch = FetchType.LAZY)
-    //    @JoinColumn(name = "discount_id",referencedColumnName = "promotion_id")
-    //    private Promotion promotion;
 
     @ManyToOne
     @JoinColumn(name = "discount_id", referencedColumnName = "promotion_id")
@@ -46,8 +37,4 @@ public class Cart {
 
     @NotNull @Column(name = "discount", nullable = false, precision = 10, scale = 2)
     private BigDecimal discount;
-
-    //    @OneToMany(mappedBy = "cart")
-    //    private Set<CartItem> cartItemSet;
-
 }

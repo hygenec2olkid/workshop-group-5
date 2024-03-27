@@ -7,6 +7,11 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1")
 public class CartController {
+    private CartService cartService;
+
+    public CartController(CartService cartService) {
+        this.cartService = cartService;
+    }
 
     @GetMapping("/carts")
     public ResponseEntity getCart() { // NOSONAR
@@ -17,6 +22,12 @@ public class CartController {
     public ResponseEntity addProductsToCart(
             @PathVariable String username, @RequestBody ProductDetailBody productDetailBody) {
         return ResponseEntity.status(HttpStatusCode.valueOf(201)).build();
+    }
+
+    @PostMapping("/carts/{username}/items-mock")
+    public String addProductsToCartReal(
+            @PathVariable String username, @RequestBody ProductDetailBody productDetailBody) {
+        return this.cartService.addProductToCart(username, productDetailBody);
     }
 }
 

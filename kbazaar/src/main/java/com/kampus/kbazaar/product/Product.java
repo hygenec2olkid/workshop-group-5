@@ -1,6 +1,6 @@
 package com.kampus.kbazaar.product;
 
-import com.kampus.kbazaar.cart.CartItem;
+import com.kampus.kbazaar.cartItem.CartItem;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
