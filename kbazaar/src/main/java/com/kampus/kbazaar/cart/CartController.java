@@ -31,4 +31,4 @@ public class CartController {
     }
 }
 
-record ProductDetailBody(int productSku, int quantity) {}
+record ProductDetailBody(Long productSku, int quantity) {}

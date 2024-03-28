@@ -9,6 +9,7 @@ import com.kampus.kbazaar.shopper.Shopper;
 import com.kampus.kbazaar.shopper.ShopperRepository;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,7 +58,9 @@ public class CartService {
             cartItem.setCart(cart);
             cartItem.setQuantity(productDetailBody.quantity());
             cart.setShopper(shopper);
-            cart.setTotal(BigDecimal.valueOf(100.00));
+            BigDecimal total =
+                    product.getPrice().multiply(BigDecimal.valueOf(productDetailBody.quantity()));
+            cart.setTotal(total);
             cart.setDiscount(BigDecimal.valueOf(0));
 
             this.cartRepository.save(cart);
@@ -74,12 +77,31 @@ public class CartService {
             cartItem.setCart(cartShopper);
             cartItem.setQuantity(productDetailBody.quantity());
             this.cartItemRepository.save(cartItem);
+            updateTotal(cartShopper);
             return "shopper not have cartitem of this product";
         }
         // shopper have cart should update quantity
         CartItem cartItemShopper = _cartItemShopper.get();
         cartItemShopper.setQuantity(cartItemShopper.getQuantity() + productDetailBody.quantity());
         this.cartItemRepository.save(cartItemShopper);
+        updateTotal(cartShopper);
         return "shopper already have in cart";
+    }
+
+    private void updateTotal(Cart cart) {
+        List<CartItem> cartItemList = this.cartItemRepository.findByCartId(cart.getId());
+        BigDecimal total = BigDecimal.ZERO;
+        for (CartItem cartItem : cartItemList) {
+            Product product = this.productRepository.findByProductId(cartItem.getId());
+            BigDecimal subTotal =
+                    product.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity()));
+            total = total.add(subTotal);
+        }
+        //        BigDecimal total = cartItemList.stream().map(cartItem -> {
+        //            Product product = this.productRepository.findByProductId(cartItem.getId());
+        //            return
+        // product.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity()));
+        //        }).reduce(BigDecimal.ZERO,BigDecimal::add);
+        cart.setTotal(total);
     }
 }
