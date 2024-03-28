@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class CartService {
@@ -32,7 +31,6 @@ public class CartService {
         this.cartItemRepository = cartItemRepository;
     }
 
-    @Transactional
     public String addProductToCart(String userName, ProductDetailBody productDetailBody) {
         Optional<Shopper> _shopper = this.shopperRepository.findByUsername(userName);
         Optional<Product> _product =
