@@ -50,7 +50,7 @@ public class CartService {
         CartItem cartItem = new CartItem();
 
         Optional<Cart> _cartShopper = this.cartRepository.findByShopper_Id(shopper.getId());
-
+        // shopper id not have cart
         if (_cartShopper.isEmpty()) {
             cartItem.setProduct(product);
             cart.setCartItemList(new ArrayList<>());
@@ -64,6 +64,22 @@ public class CartService {
             this.cartItemRepository.save(cartItem);
             return "add product";
         }
-        return "already have in cart";
+        // shopper have cart
+        Cart cartShopper = _cartShopper.get();
+        Optional<CartItem> _cartItemShopper =
+                this.cartItemRepository.findByCartIdAndProductId(
+                        cartShopper.getId(), product.getId());
+        if (_cartItemShopper.isEmpty()) {
+            cartItem.setProduct(product);
+            cartItem.setCart(cartShopper);
+            cartItem.setQuantity(productDetailBody.quantity());
+            this.cartItemRepository.save(cartItem);
+            return "shopper not have cartitem of this product";
+        }
+        // shopper have cart should update quantity
+        CartItem cartItemShopper = _cartItemShopper.get();
+        cartItemShopper.setQuantity(cartItemShopper.getQuantity() + productDetailBody.quantity());
+        this.cartItemRepository.save(cartItemShopper);
+        return "shopper already have in cart";
     }
 }
