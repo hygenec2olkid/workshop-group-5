@@ -88,18 +88,19 @@ public class CartService {
 
     private void updateTotal(Cart cart) {
         List<CartItem> cartItemList = this.cartItemRepository.findByCartId(cart.getId());
-        BigDecimal total = BigDecimal.ZERO;
-        for (CartItem cartItem : cartItemList) {
-            Product product = this.productRepository.findByProductId(cartItem.getId());
-            BigDecimal subTotal =
-                    product.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity()));
-            total = total.add(subTotal);
-        }
-        //        BigDecimal total = cartItemList.stream().map(cartItem -> {
-        //            Product product = this.productRepository.findByProductId(cartItem.getId());
-        //            return
-        // product.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity()));
-        //        }).reduce(BigDecimal.ZERO,BigDecimal::add);
+        BigDecimal total =
+                cartItemList.stream()
+                        .map(
+                                cartItem -> {
+                                    Product product =
+                                            this.productRepository.findByProductId(
+                                                    cartItem.getProduct().getId());
+                                    return product.getPrice()
+                                            .multiply(BigDecimal.valueOf(cartItem.getQuantity()));
+                                })
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+
         cart.setTotal(total);
+        this.cartRepository.save(cart);
     }
 }
