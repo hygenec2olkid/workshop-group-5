@@ -25,7 +25,7 @@ public class CartController {
     }
 
     @PostMapping("/carts/{username}/items-mock")
-    public String addProductsToCartReal(
+    public CartResponse addProductsToCartReal(
             @PathVariable String username, @RequestBody ProductDetailBody productDetailBody) {
         return this.cartService.addProductToCart(username, productDetailBody);
     }

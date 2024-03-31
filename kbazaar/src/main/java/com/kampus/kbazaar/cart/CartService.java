@@ -8,7 +8,6 @@ import com.kampus.kbazaar.product.ProductRepository;
 import com.kampus.kbazaar.shopper.Shopper;
 import com.kampus.kbazaar.shopper.ShopperRepository;
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
@@ -31,7 +30,7 @@ public class CartService {
         this.cartItemRepository = cartItemRepository;
     }
 
-    public String addProductToCart(String userName, ProductDetailBody productDetailBody) {
+    public CartResponse addProductToCart(String userName, ProductDetailBody productDetailBody) {
         Optional<Shopper> _shopper = this.shopperRepository.findByUsername(userName);
         Optional<Product> _product =
                 this.productRepository.findById(productDetailBody.productSku());
@@ -45,45 +44,47 @@ public class CartService {
         Shopper shopper = _shopper.get();
         Product product = _product.get();
 
-        Cart cart = new Cart();
         CartItem cartItem = new CartItem();
 
         Optional<Cart> _cartShopper = this.cartRepository.findByShopper_Id(shopper.getId());
-        // shopper id not have cart
+        // Case shopper not a cart
         if (_cartShopper.isEmpty()) {
-            cartItem.setProduct(product);
-            cart.setCartItemList(new ArrayList<>());
-            cartItem.setCart(cart);
-            cartItem.setQuantity(productDetailBody.quantity());
+            Cart cart = new Cart();
             cart.setShopper(shopper);
+            cart.setDiscount(BigDecimal.valueOf(0));
             BigDecimal total =
                     product.getPrice().multiply(BigDecimal.valueOf(productDetailBody.quantity()));
             cart.setTotal(total);
-            cart.setDiscount(BigDecimal.valueOf(0));
+
+            cartItem.setCart(cart);
+            cartItem.setProduct(product);
+            cartItem.setQuantity(productDetailBody.quantity());
+
+            cart.setCartItemList(List.of(cartItem));
 
             this.cartRepository.save(cart);
             this.cartItemRepository.save(cartItem);
-            return "add product";
+            return cart.toResponse();
         }
-        // shopper have cart
         Cart cartShopper = _cartShopper.get();
         Optional<CartItem> _cartItemShopper =
                 this.cartItemRepository.findByCartIdAndProductId(
                         cartShopper.getId(), product.getId());
+        // Case shopper not have product in cart
         if (_cartItemShopper.isEmpty()) {
             cartItem.setProduct(product);
             cartItem.setCart(cartShopper);
             cartItem.setQuantity(productDetailBody.quantity());
             this.cartItemRepository.save(cartItem);
             updateTotal(cartShopper);
-            return "shopper not have cartitem of this product";
+            return cartShopper.toResponse();
         }
-        // shopper have cart should update quantity
+        // Case shopper have product in cart will update a cart
         CartItem cartItemShopper = _cartItemShopper.get();
         cartItemShopper.setQuantity(cartItemShopper.getQuantity() + productDetailBody.quantity());
         this.cartItemRepository.save(cartItemShopper);
         updateTotal(cartShopper);
-        return "shopper already have in cart";
+        return cartShopper.toResponse();
     }
 
     private void updateTotal(Cart cart) {

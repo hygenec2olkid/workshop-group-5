@@ -1,21 +1,22 @@
 package com.kampus.kbazaar.cart;
 
 import com.kampus.kbazaar.cartItem.CartItem;
+import com.kampus.kbazaar.cartItem.CartItemResponse;
 import com.kampus.kbazaar.promotion.Promotion;
 import com.kampus.kbazaar.shopper.Shopper;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.util.stream.Collectors;
+import lombok.*;
 
 @Entity
 @Table(name = "cart")
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
+@Getter
+@Setter
 public class Cart {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,4 +39,15 @@ public class Cart {
 
     @NotNull @Column(name = "discount", nullable = false, precision = 10, scale = 2)
     private BigDecimal discount;
+
+    private List<CartItemResponse> getCartItemList() {
+        return cartItemList.stream()
+                .map(item -> new CartItemResponse(item.getProduct().getName(), item.getQuantity()))
+                .collect(Collectors.toList());
+    }
+
+    public CartResponse toResponse() {
+        return new CartResponse(
+                this.shopper.getUsername(), getCartItemList(), this.total, this.discount);
+    }
 }

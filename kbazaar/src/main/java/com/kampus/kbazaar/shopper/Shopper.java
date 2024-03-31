@@ -2,12 +2,11 @@ package com.kampus.kbazaar.shopper;
 
 import com.kampus.kbazaar.cart.Cart;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity(name = "shopper")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Shopper {

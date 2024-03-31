@@ -4,14 +4,13 @@ import com.kampus.kbazaar.cart.Cart;
 import com.kampus.kbazaar.product.Product;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
+@Getter
+@Setter
 @Table(name = "cart_item")
 public class CartItem {
     @Id
