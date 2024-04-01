@@ -9,9 +9,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.ComponentScan;
@@ -19,9 +19,9 @@ import org.springframework.context.annotation.FilterType;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 @ExtendWith(SpringExtension.class)
+@AutoConfigureMockMvc(addFilters = false)
 @WebMvcTest(
         controllers = CartController.class,
         excludeFilters =
@@ -34,12 +34,9 @@ public class CartControllerTest {
 
     @MockBean private CartService cartService;
 
-    @InjectMocks private CartController cartController;
-
     @BeforeEach
     public void setup() {
         MockitoAnnotations.openMocks(this);
-        this.mockMvc = MockMvcBuilders.standaloneSetup(cartController).build();
     }
 
     @Test
@@ -49,8 +46,10 @@ public class CartControllerTest {
     }
 
     @Test
-    @DisplayName("should return status 200 after add product in cart")
+    @DisplayName("should return status 201 after add product in cart")
     public void shouldReturnOkStatusAfterAddProduct() throws Exception {
+        String mockProductSku = "mockUsername";
+        ProductDetailBody mockProductDetailBody = new ProductDetailBody(1L, 2);
         String requestBody =
                 """
                 {
@@ -58,7 +57,7 @@ public class CartControllerTest {
                       "quantity": 2
                   }""";
         mockMvc.perform(
-                        post("/api/v1/carts/mockUsername/items")
+                        post("/api/v1/carts/" + mockProductSku + "/items")
                                 .content(requestBody)
                                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated());

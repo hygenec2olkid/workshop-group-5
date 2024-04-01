@@ -1,6 +1,6 @@
 package com.kampus.kbazaar.cart;
 
-import org.springframework.http.HttpStatusCode;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,15 +19,10 @@ public class CartController {
     }
 
     @PostMapping("/carts/{username}/items")
-    public ResponseEntity addProductsToCart(
+    public ResponseEntity<CartResponse> addProductsToCart(
             @PathVariable String username, @RequestBody ProductDetailBody productDetailBody) {
-        return ResponseEntity.status(HttpStatusCode.valueOf(201)).build();
-    }
-
-    @PostMapping("/carts/{username}/items-mock")
-    public CartResponse addProductsToCartReal(
-            @PathVariable String username, @RequestBody ProductDetailBody productDetailBody) {
-        return this.cartService.addProductToCart(username, productDetailBody);
+        return new ResponseEntity<>(
+                this.cartService.addProductToCart(username, productDetailBody), HttpStatus.CREATED);
     }
 }
 
