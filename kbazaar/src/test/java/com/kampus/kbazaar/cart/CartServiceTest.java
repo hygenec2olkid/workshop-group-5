@@ -2,14 +2,17 @@ package com.kampus.kbazaar.cart;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
+import com.kampus.kbazaar.cartItem.CartItem;
 import com.kampus.kbazaar.cartItem.CartItemRepository;
+import com.kampus.kbazaar.exceptions.NotFoundException;
 import com.kampus.kbazaar.product.Product;
 import com.kampus.kbazaar.product.ProductRepository;
 import com.kampus.kbazaar.shopper.Shopper;
 import com.kampus.kbazaar.shopper.ShopperRepository;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -23,6 +26,8 @@ class CartServiceTest {
     @Mock private ProductRepository productRepository;
     @Mock private ShopperRepository shopperRepository;
     @Mock private CartItemRepository cartItemRepository;
+
+    @Mock private CartService mockedCartService;
     @InjectMocks private CartService cartService;
 
     @BeforeEach
@@ -51,5 +56,65 @@ class CartServiceTest {
         assertEquals(1, actual.products().size());
         assertEquals(mockUserName, actual.userName());
         assertEquals(BigDecimal.ZERO, actual.discount());
+    }
+
+    @Test
+    @DisplayName("should throw error not found exception when not found shopper")
+    public void shouldThrowNotFoundExceptionIfNotFoundShopper() {
+        String mockUsername = "test";
+        when(shopperRepository.findByUsername(mockUsername)).thenReturn(Optional.empty());
+        ProductDetailBody productDetailBody = new ProductDetailBody(1L, 3);
+        String expected = mockUsername + " is not member of Kbazaar";
+
+        Exception actual =
+                assertThrows(
+                        NotFoundException.class,
+                        () -> cartService.addProductToCart(mockUsername, productDetailBody));
+
+        assertEquals(expected, actual.getMessage());
+    }
+
+    @Test
+    @DisplayName("should throw error not found exception when not found product")
+    public void shouldThrowNotFoundExceptionIfNotFoundProduct() {
+        String mockUsername = "test";
+        ProductDetailBody productDetailBody = new ProductDetailBody(1L, 3);
+        Shopper shopper = new Shopper();
+        shopper.setId(1L);
+
+        when(shopperRepository.findByUsername(mockUsername)).thenReturn(Optional.of(shopper));
+        when(productRepository.findById(productDetailBody.productSku()))
+                .thenReturn(Optional.empty());
+        String expected = productDetailBody.productSku() + " is not have in product";
+
+        Exception actual =
+                assertThrows(
+                        NotFoundException.class,
+                        () -> cartService.addProductToCart(mockUsername, productDetailBody));
+
+        assertEquals(expected, actual.getMessage());
+    }
+
+    @Test
+    public void testUpdateTotal() {
+        Cart cart = new Cart();
+        cart.setId(1L);
+        CartItem cartItem1 = new CartItem();
+        cartItem1.setId(1L);
+        cartItem1.setProduct(new Product());
+        cartItem1.setQuantity(2);
+        CartItem cartItem2 = new CartItem();
+        cartItem2.setId(2L);
+        cartItem2.setProduct(new Product());
+        cartItem2.setQuantity(3);
+        List<CartItem> cartItemList = List.of(cartItem1, cartItem2);
+        when(cartItemRepository.findByCartId(any())).thenReturn(cartItemList);
+        Product product = new Product();
+        product.setPrice(BigDecimal.TEN);
+        when(productRepository.findByProductId(any())).thenReturn(product);
+
+        cartService.updateTotal(cart);
+
+        assertEquals(BigDecimal.valueOf(50), cart.getTotal());
     }
 }

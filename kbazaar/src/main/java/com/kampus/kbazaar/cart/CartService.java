@@ -39,7 +39,7 @@ public class CartService {
             throw new NotFoundException(userName + " is not member of Kbazaar");
         }
         if (_product.isEmpty()) {
-            throw new NotFoundException(productDetailBody.productSku() + " is not in product");
+            throw new NotFoundException(productDetailBody.productSku() + " is not have in product");
         }
         Shopper shopper = _shopper.get();
         Product product = _product.get();
@@ -87,7 +87,7 @@ public class CartService {
         return cartShopper.toResponse();
     }
 
-    private void updateTotal(Cart cart) {
+    public void updateTotal(Cart cart) {
         List<CartItem> cartItemList = this.cartItemRepository.findByCartId(cart.getId());
         BigDecimal total =
                 cartItemList.stream()
