@@ -59,6 +59,104 @@ class CartServiceTest {
     }
 
     @Test
+    @DisplayName("should return new cartItem of shopper after add product")
+    public void shouldReturnNewCartItem() {
+        String mockUserName = "test";
+        Shopper shopper = new Shopper();
+        shopper.setId(10L);
+        shopper.setUsername(mockUserName);
+        Product product = new Product();
+        product.setId(10L);
+        product.setPrice(BigDecimal.TEN);
+        ProductDetailBody productDetailBody = new ProductDetailBody(1L, 3);
+        when(shopperRepository.findByUsername(mockUserName)).thenReturn(Optional.of(shopper));
+        when(productRepository.findById(any())).thenReturn(Optional.of(product));
+        Cart cartShopper = new Cart();
+        cartShopper.setId(10L);
+        cartShopper.setShopper(shopper);
+        cartShopper.setDiscount(BigDecimal.ZERO);
+
+        CartItem cartItem1 = new CartItem();
+        cartItem1.setId(10L);
+        cartItem1.setQuantity(1);
+        Product product1 = new Product();
+        product1.setId(1L);
+        cartItem1.setProduct(product1);
+
+        CartItem cartItem2 = new CartItem();
+        cartItem2.setId(20L);
+        cartItem2.setQuantity(2);
+        Product product2 = new Product();
+        product2.setId(2L);
+        cartItem2.setProduct(product2);
+
+        cartShopper.setCartItemList(List.of(cartItem1, cartItem2));
+        when(cartRepository.findByShopper_Id(any())).thenReturn(Optional.of(cartShopper));
+        when(cartItemRepository.findByCartIdAndProductId(any(), any()))
+                .thenReturn(Optional.empty());
+        CartItem cartItemAfterSave = new CartItem();
+        cartItemAfterSave.setProduct(product);
+        cartItemAfterSave.setCart(cartShopper);
+        cartItemAfterSave.setQuantity(productDetailBody.quantity());
+        when(cartItemRepository.findByCartId(any()))
+                .thenReturn(List.of(cartItem1, cartItem2, cartItemAfterSave));
+        Product productSum = new Product();
+        productSum.setPrice(BigDecimal.TEN);
+        when(productRepository.findByProductId(any())).thenReturn(productSum);
+
+        CartResponse actual = cartService.addProductToCart(mockUserName, productDetailBody);
+
+        assertEquals(BigDecimal.valueOf(60), actual.total());
+        assertEquals(mockUserName, actual.userName());
+        assertEquals(BigDecimal.ZERO, actual.discount());
+    }
+
+    @Test
+    @DisplayName("should return updated cartItem of shopper after add product")
+    public void shouldReturnUpdatedCartItem() {
+        String mockUserName = "test";
+        Shopper shopper = new Shopper();
+        shopper.setId(10L);
+        shopper.setUsername(mockUserName);
+        Product product = new Product();
+        product.setId(10L);
+        product.setPrice(BigDecimal.TEN);
+        ProductDetailBody productDetailBody = new ProductDetailBody(1L, 3);
+        when(shopperRepository.findByUsername(mockUserName)).thenReturn(Optional.of(shopper));
+        when(productRepository.findById(any())).thenReturn(Optional.of(product));
+        Cart cartShopper = new Cart();
+        cartShopper.setId(10L);
+        cartShopper.setShopper(shopper);
+        cartShopper.setDiscount(BigDecimal.ZERO);
+
+        CartItem cartItemThatFound = new CartItem();
+        cartItemThatFound.setId(10L);
+        cartItemThatFound.setQuantity(2);
+        cartItemThatFound.setProduct(product);
+
+        cartShopper.setCartItemList(List.of(cartItemThatFound));
+
+        when(cartRepository.findByShopper_Id(any())).thenReturn(Optional.of(cartShopper));
+        when(cartItemRepository.findByCartIdAndProductId(any(), any()))
+                .thenReturn(Optional.of(cartItemThatFound));
+        CartItem cartItemAfterSave = new CartItem();
+        cartItemAfterSave.setProduct(product);
+        cartItemAfterSave.setCart(cartShopper);
+        cartItemAfterSave.setQuantity(
+                cartItemThatFound.getQuantity() + productDetailBody.quantity());
+        when(cartItemRepository.findByCartId(any())).thenReturn(List.of(cartItemAfterSave));
+        Product productSum = new Product();
+        productSum.setPrice(BigDecimal.TEN);
+        when(productRepository.findByProductId(any())).thenReturn(productSum);
+
+        CartResponse actual = cartService.addProductToCart(mockUserName, productDetailBody);
+
+        assertEquals(BigDecimal.valueOf(50), actual.total());
+        assertEquals(mockUserName, actual.userName());
+        assertEquals(BigDecimal.ZERO, actual.discount());
+    }
+
+    @Test
     @DisplayName("should throw error not found exception when not found shopper")
     public void shouldThrowNotFoundExceptionIfNotFoundShopper() {
         String mockUsername = "test";
