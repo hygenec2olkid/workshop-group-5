@@ -22,4 +22,8 @@ public class PromotionService {
                 .map(Promotion::toResponse)
                 .orElseThrow(() -> new NotFoundException("Promotion not found"));
     }
+
+    public String usePromotionCode(String username, String code) {
+        return "test";
+    }
 }

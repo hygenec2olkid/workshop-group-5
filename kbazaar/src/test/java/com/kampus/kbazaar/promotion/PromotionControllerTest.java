@@ -4,6 +4,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.kampus.kbazaar.security.JwtAuthFilter;
@@ -69,5 +70,26 @@ public class PromotionControllerTest {
                 .andExpect(status().isOk());
 
         verify(promotionService, times(1)).getPromotionByCode(code);
+    }
+
+    @Test
+    @DisplayName("should return 200 when promotion available")
+    public void shouldReturn200IfPromotionCodeAvailable() throws Exception {
+        String code = "TEST-PROMO-1";
+        String username = "test";
+        String requestBody =
+                """
+                {
+                      "code": "TEST-PROMO-1"
+                  }""";
+
+        when(promotionService.usePromotionCode(username, code)).thenReturn("");
+
+        mockMvc.perform(
+                        post("/api/v1/carts/" + username + "/promotions")
+                                .content(requestBody)
+                                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        verify(promotionService, times(1)).usePromotionCode(username, requestBody);
     }
 }

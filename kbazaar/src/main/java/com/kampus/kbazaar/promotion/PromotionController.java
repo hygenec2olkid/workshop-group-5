@@ -8,10 +8,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -70,5 +67,10 @@ public class PromotionController {
     @GetMapping("/promotions/{code}")
     public PromotionResponse getPromotionByCode(@PathVariable String code) {
         return promotionService.getPromotionByCode(code);
+    }
+
+    @PostMapping("/carts/{username}/promotions")
+    public String shopperUsePromotion(@PathVariable String username, @RequestBody String code) {
+        return promotionService.usePromotionCode(username, code);
     }
 }
