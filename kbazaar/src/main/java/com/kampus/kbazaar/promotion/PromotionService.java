@@ -2,6 +2,7 @@ package com.kampus.kbazaar.promotion;
 
 import com.kampus.kbazaar.cart.Cart;
 import com.kampus.kbazaar.cart.CartRepository;
+import com.kampus.kbazaar.cart.CartResponse;
 import com.kampus.kbazaar.exceptions.NotFoundException;
 import com.kampus.kbazaar.shopper.Shopper;
 import com.kampus.kbazaar.shopper.ShopperRepository;
@@ -36,7 +37,19 @@ public class PromotionService {
                 .orElseThrow(() -> new NotFoundException("Promotion not found"));
     }
 
-    public String usePromotionCode(String username, String code) {
+    public CartResponse usePromotionCode(String username, String code) {
+        Cart cart = this.findCartOfShopper(username);
+        Promotion promotion = this.findPromotionByCode(code);
+        return cart.toResponse();
+    }
+
+    public Promotion findPromotionByCode(String code) {
+        return this.promotionRepository
+                .findByCode(code)
+                .orElseThrow(() -> new NotFoundException("Promotion not found"));
+    }
+
+    public Cart findCartOfShopper(String username) {
         Shopper shopper =
                 this.shopperRepository
                         .findByUsername(username)
@@ -47,15 +60,13 @@ public class PromotionService {
                                                         + username
                                                         + " not have in ShopperRepo"));
 
-        Cart cart =
-                this.cartRepository
-                        .findByShopper_Id(shopper.getId())
-                        .orElseThrow(
-                                () ->
-                                        new NotFoundException(
-                                                "Can't use promotion code because "
-                                                        + username
-                                                        + " not have item in cart"));
-        return cart.getShopper().getUsername();
+        return this.cartRepository
+                .findByShopper_Id(shopper.getId())
+                .orElseThrow(
+                        () ->
+                                new NotFoundException(
+                                        "Can't use promotion code because "
+                                                + username
+                                                + " not have item in cart"));
     }
 }

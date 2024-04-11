@@ -7,7 +7,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kampus.kbazaar.cart.CartResponse;
 import com.kampus.kbazaar.security.JwtAuthFilter;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -37,6 +40,7 @@ public class PromotionControllerTest {
     @Autowired private MockMvc mockMvc;
 
     @MockBean private PromotionService promotionService;
+    @Autowired private ObjectMapper objectMapper;
 
     @BeforeEach
     public void setup() {
@@ -77,19 +81,20 @@ public class PromotionControllerTest {
     public void shouldReturn200IfPromotionCodeAvailable() throws Exception {
         String code = "TEST-PROMO-1";
         String username = "test";
-        String requestBody =
-                """
-                {
-                      "code": "TEST-PROMO-1"
-                  }""";
+        RequestBodyCode requestBodyCode = new RequestBodyCode(code);
 
-        when(promotionService.usePromotionCode(username, code)).thenReturn("");
+        when(promotionService.usePromotionCode(username, requestBodyCode.code()))
+                .thenReturn(
+                        new CartResponse(
+                                username, new ArrayList<>(), BigDecimal.ZERO, BigDecimal.ZERO));
+
+        String jsonRequestBody = this.objectMapper.writeValueAsString(requestBodyCode);
 
         mockMvc.perform(
                         post("/api/v1/carts/" + username + "/promotions")
-                                .content(requestBody)
+                                .content(jsonRequestBody)
                                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
-        verify(promotionService, times(1)).usePromotionCode(username, requestBody);
+        verify(promotionService, times(1)).usePromotionCode(username, requestBodyCode.code());
     }
 }

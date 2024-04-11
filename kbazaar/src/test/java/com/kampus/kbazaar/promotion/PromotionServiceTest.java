@@ -84,7 +84,7 @@ class PromotionServiceTest {
         Exception actual =
                 assertThrows(
                         NotFoundException.class,
-                        () -> promotionService.usePromotionCode(username, promotionCode));
+                        () -> promotionService.findCartOfShopper(username));
 
         assertEquals(expected, actual.getMessage());
     }
@@ -104,7 +104,20 @@ class PromotionServiceTest {
         Exception actual =
                 assertThrows(
                         NotFoundException.class,
-                        () -> promotionService.usePromotionCode(username, promotionCode));
+                        () -> promotionService.findCartOfShopper(username));
+
+        assertEquals(expected, actual.getMessage());
+    }
+
+    @Test
+    @DisplayName("should throw NotFoundException when can't find promotion code")
+    public void shouldThrowNotFoundExceptionWhenNotFoundPromotion() {
+        String code = "TEST-CODE-1";
+        when(promotionRepository.findByCode(code)).thenReturn(Optional.empty());
+        String expected = "Promotion not found";
+        Exception actual =
+                assertThrows(
+                        NotFoundException.class, () -> promotionService.findPromotionByCode(code));
 
         assertEquals(expected, actual.getMessage());
     }
