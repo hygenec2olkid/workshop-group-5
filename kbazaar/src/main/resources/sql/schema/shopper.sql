@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS cart_item (
     cart_session INT NOT NULL,
     product_id INT NOT NULL,
     quantity INT NOT NULL,
+    sub_total DECIMAL(10, 2) NOT NULL,
     CONSTRAINT cart_item_cart_fk FOREIGN KEY (cart_session) REFERENCES cart(id),
     CONSTRAINT cart_item_product_fk FOREIGN KEY (product_id) REFERENCES product(id)
 );

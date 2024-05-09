@@ -59,6 +59,8 @@ public class CartService {
             cartItem.setCart(cart);
             cartItem.setProduct(product);
             cartItem.setQuantity(productDetailBody.quantity());
+            cartItem.setSubTotal(
+                    product.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity())));
 
             cart.setCartItemList(List.of(cartItem));
 
@@ -75,6 +77,8 @@ public class CartService {
             cartItem.setProduct(product);
             cartItem.setCart(cartShopper);
             cartItem.setQuantity(productDetailBody.quantity());
+            cartItem.setSubTotal(
+                    product.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity())));
             this.cartItemRepository.save(cartItem);
             updateTotal(cartShopper);
             return cartShopper.toResponse();
@@ -82,6 +86,8 @@ public class CartService {
         // Case shopper have product in cart will update a cart
         CartItem cartItemShopper = _cartItemShopper.get();
         cartItemShopper.setQuantity(cartItemShopper.getQuantity() + productDetailBody.quantity());
+        cartItemShopper.setSubTotal(
+                product.getPrice().multiply(BigDecimal.valueOf(cartItemShopper.getQuantity())));
         this.cartItemRepository.save(cartItemShopper);
         updateTotal(cartShopper);
         return cartShopper.toResponse();
@@ -89,16 +95,10 @@ public class CartService {
 
     public void updateTotal(Cart cart) {
         List<CartItem> cartItemList = this.cartItemRepository.findByCartId(cart.getId());
+
         BigDecimal total =
                 cartItemList.stream()
-                        .map(
-                                cartItem -> {
-                                    Product product =
-                                            this.productRepository.findByProductId(
-                                                    cartItem.getProduct().getId());
-                                    return product.getPrice()
-                                            .multiply(BigDecimal.valueOf(cartItem.getQuantity()));
-                                })
+                        .map(CartItem::getSubTotal)
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         cart.setTotal(total);

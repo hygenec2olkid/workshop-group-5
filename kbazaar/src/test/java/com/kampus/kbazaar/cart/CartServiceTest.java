@@ -82,6 +82,7 @@ class CartServiceTest {
         Product product1 = new Product();
         product1.setId(1L);
         cartItem1.setProduct(product1);
+        cartItem1.setSubTotal(BigDecimal.valueOf(10));
 
         CartItem cartItem2 = new CartItem();
         cartItem2.setId(20L);
@@ -89,6 +90,7 @@ class CartServiceTest {
         Product product2 = new Product();
         product2.setId(2L);
         cartItem2.setProduct(product2);
+        cartItem2.setSubTotal(BigDecimal.valueOf(20));
 
         cartShopper.setCartItemList(List.of(cartItem1, cartItem2));
         when(cartRepository.findByShopper_Id(any())).thenReturn(Optional.of(cartShopper));
@@ -98,11 +100,9 @@ class CartServiceTest {
         cartItemAfterSave.setProduct(product);
         cartItemAfterSave.setCart(cartShopper);
         cartItemAfterSave.setQuantity(productDetailBody.quantity());
+        cartItemAfterSave.setSubTotal(BigDecimal.valueOf(30));
         when(cartItemRepository.findByCartId(any()))
                 .thenReturn(List.of(cartItem1, cartItem2, cartItemAfterSave));
-        Product productSum = new Product();
-        productSum.setPrice(BigDecimal.TEN);
-        when(productRepository.findByProductId(any())).thenReturn(productSum);
 
         CartResponse actual = cartService.addProductToCart(mockUserName, productDetailBody);
 
@@ -144,14 +144,12 @@ class CartServiceTest {
         cartItemAfterSave.setCart(cartShopper);
         cartItemAfterSave.setQuantity(
                 cartItemThatFound.getQuantity() + productDetailBody.quantity());
+        cartItemAfterSave.setSubTotal(BigDecimal.TEN);
         when(cartItemRepository.findByCartId(any())).thenReturn(List.of(cartItemAfterSave));
-        Product productSum = new Product();
-        productSum.setPrice(BigDecimal.TEN);
-        when(productRepository.findByProductId(any())).thenReturn(productSum);
 
         CartResponse actual = cartService.addProductToCart(mockUserName, productDetailBody);
 
-        assertEquals(BigDecimal.valueOf(50), actual.total());
+        assertEquals(BigDecimal.valueOf(10), actual.total());
         assertEquals(mockUserName, actual.userName());
         assertEquals(BigDecimal.ZERO, actual.discount());
     }
@@ -200,19 +198,16 @@ class CartServiceTest {
         CartItem cartItem1 = new CartItem();
         cartItem1.setId(1L);
         cartItem1.setProduct(new Product());
-        cartItem1.setQuantity(2);
+        cartItem1.setSubTotal(BigDecimal.TEN);
         CartItem cartItem2 = new CartItem();
         cartItem2.setId(2L);
         cartItem2.setProduct(new Product());
-        cartItem2.setQuantity(3);
+        cartItem2.setSubTotal(BigDecimal.valueOf(100));
         List<CartItem> cartItemList = List.of(cartItem1, cartItem2);
         when(cartItemRepository.findByCartId(any())).thenReturn(cartItemList);
-        Product product = new Product();
-        product.setPrice(BigDecimal.TEN);
-        when(productRepository.findByProductId(any())).thenReturn(product);
 
         cartService.updateTotal(cart);
 
-        assertEquals(BigDecimal.valueOf(50), cart.getTotal());
+        assertEquals(BigDecimal.valueOf(110), cart.getTotal());
     }
 }

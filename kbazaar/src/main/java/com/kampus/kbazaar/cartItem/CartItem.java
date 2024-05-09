@@ -4,6 +4,7 @@ import com.kampus.kbazaar.cart.Cart;
 import com.kampus.kbazaar.product.Product;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import java.math.BigDecimal;
 import lombok.*;
 
 @Entity
@@ -28,4 +29,7 @@ public class CartItem {
 
     @NotNull @Column(name = "quantity", nullable = false)
     private Integer quantity;
+
+    @NotNull @Column(name = "sub_total", nullable = false)
+    private BigDecimal subTotal;
 }

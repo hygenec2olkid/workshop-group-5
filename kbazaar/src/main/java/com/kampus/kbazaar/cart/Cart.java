@@ -42,7 +42,12 @@ public class Cart {
 
     private List<CartItemResponse> getCartItemList() {
         return cartItemList.stream()
-                .map(item -> new CartItemResponse(item.getProduct().getName(), item.getQuantity()))
+                .map(
+                        item ->
+                                new CartItemResponse(
+                                        item.getProduct().getName(),
+                                        item.getQuantity(),
+                                        item.getSubTotal()))
                 .collect(Collectors.toList());
     }
 
