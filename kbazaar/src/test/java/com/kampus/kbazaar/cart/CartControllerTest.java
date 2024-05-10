@@ -77,4 +77,15 @@ public class CartControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
     }
+
+    @Test
+    @DisplayName("should return status 200 after call get cart of shopper")
+    public void shouldReturn200AfterGetCartOfShopper() throws Exception {
+        String mockUsername = "TEST";
+
+        mockMvc.perform(
+                        get("/api/v1/carts/" + mockUsername)
+                                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+    }
 }

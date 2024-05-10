@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 
 import com.kampus.kbazaar.cartItem.CartItem;
 import com.kampus.kbazaar.cartItem.CartItemRepository;
+import com.kampus.kbazaar.cartItem.CartItemResponse;
 import com.kampus.kbazaar.exceptions.NotFoundException;
 import com.kampus.kbazaar.product.Product;
 import com.kampus.kbazaar.product.ProductRepository;
@@ -209,5 +210,53 @@ class CartServiceTest {
         cartService.updateTotal(cart);
 
         assertEquals(BigDecimal.valueOf(110), cart.getTotal());
+    }
+
+    @Test
+    @DisplayName("should return message not fount cart of shopper")
+    public void shouldReturnMessageNotFoundCartOfShopper() {
+        String mockUsername = "TEST";
+        when(cartRepository.findByShopper_name(mockUsername)).thenReturn(Optional.empty());
+        String expected = mockUsername + " not have any item in cart";
+
+        Exception actual =
+                assertThrows(
+                        NotFoundException.class, () -> cartService.getCartByUsername(mockUsername));
+
+        assertEquals(expected, actual.getMessage());
+    }
+
+    @Test
+    @DisplayName("should return cart of shopper")
+    public void shouldReturnCartOfShopper() {
+        String mockUsername = "TEST";
+        Cart cart = new Cart();
+        Shopper shopper = new Shopper();
+        shopper.setUsername(mockUsername);
+        CartItem cartItem = new CartItem();
+        Product product = new Product();
+        product.setName("TEST-Product");
+        cartItem.setProduct(product);
+        cartItem.setQuantity(3);
+        cartItem.setSubTotal(BigDecimal.TEN);
+        cart.setShopper(shopper);
+        cart.setCartItemList(List.of(cartItem));
+        cart.setTotal(BigDecimal.TEN);
+        cart.setDiscount(BigDecimal.ZERO);
+
+        when(cartRepository.findByShopper_name(mockUsername)).thenReturn(Optional.of(cart));
+
+        CartResponse cartResponse = cartService.getCartByUsername(mockUsername);
+
+        assertEquals(mockUsername, cartResponse.userName());
+        assertEquals(
+                List.of(
+                        new CartItemResponse(
+                                cartItem.getProduct().getName(),
+                                cartItem.getQuantity(),
+                                cartItem.getSubTotal())),
+                cartResponse.products());
+        assertEquals(BigDecimal.ZERO, cartResponse.discount());
+        assertEquals(BigDecimal.TEN, cartResponse.total());
     }
 }

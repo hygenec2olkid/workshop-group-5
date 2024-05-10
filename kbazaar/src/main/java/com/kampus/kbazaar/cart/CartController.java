@@ -24,6 +24,11 @@ public class CartController {
         return new ResponseEntity<>(
                 this.cartService.addProductToCart(username, productDetailBody), HttpStatus.CREATED);
     }
+
+    @GetMapping("/carts/{username}")
+    public CartResponse getCartByUsername(@PathVariable String username) {
+        return this.cartService.getCartByUsername(username);
+    }
 }
 
 record ProductDetailBody(Long productSku, int quantity) {}

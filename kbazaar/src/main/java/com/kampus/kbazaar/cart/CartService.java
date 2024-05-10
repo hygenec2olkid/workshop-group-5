@@ -104,4 +104,15 @@ public class CartService {
         cart.setTotal(total);
         this.cartRepository.save(cart);
     }
+
+    public CartResponse getCartByUsername(String username) {
+        Cart cart =
+                this.cartRepository
+                        .findByShopper_name(username)
+                        .orElseThrow(
+                                () ->
+                                        new NotFoundException(
+                                                username + " not have any item in cart"));
+        return cart.toResponse();
+    }
 }
