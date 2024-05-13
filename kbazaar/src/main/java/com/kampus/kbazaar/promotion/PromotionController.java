@@ -1,6 +1,5 @@
 package com.kampus.kbazaar.promotion;
 
-import com.kampus.kbazaar.cart.CartResponse;
 import com.kampus.kbazaar.exceptions.NotFoundException;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -69,12 +68,4 @@ public class PromotionController {
     public PromotionResponse getPromotionByCode(@PathVariable String code) {
         return promotionService.getPromotionByCode(code);
     }
-
-    @PostMapping("/carts/{username}/promotions")
-    public CartResponse shopperUsePromotion(
-            @PathVariable String username, @RequestBody RequestBodyCode requestBodyCode) {
-        return promotionService.usePromotionCode(username, requestBodyCode.code());
-    }
 }
-
-record RequestBodyCode(String code) {}

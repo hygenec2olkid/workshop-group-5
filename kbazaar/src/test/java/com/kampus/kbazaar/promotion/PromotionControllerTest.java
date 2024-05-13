@@ -1,16 +1,11 @@
 package com.kampus.kbazaar.promotion;
 
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kampus.kbazaar.cart.CartResponse;
 import com.kampus.kbazaar.security.JwtAuthFilter;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -74,27 +69,5 @@ public class PromotionControllerTest {
                 .andExpect(status().isOk());
 
         verify(promotionService, times(1)).getPromotionByCode(code);
-    }
-
-    @Test
-    @DisplayName("should return 200 when promotion available")
-    public void shouldReturn200IfPromotionCodeAvailable() throws Exception {
-        String code = "TEST-PROMO-1";
-        String username = "test";
-        RequestBodyCode requestBodyCode = new RequestBodyCode(code);
-
-        when(promotionService.usePromotionCode(username, requestBodyCode.code()))
-                .thenReturn(
-                        new CartResponse(
-                                username, new ArrayList<>(), BigDecimal.ZERO, BigDecimal.ZERO));
-
-        String jsonRequestBody = this.objectMapper.writeValueAsString(requestBodyCode);
-
-        mockMvc.perform(
-                        post("/api/v1/carts/" + username + "/promotions")
-                                .content(jsonRequestBody)
-                                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
-        verify(promotionService, times(1)).usePromotionCode(username, requestBodyCode.code());
     }
 }

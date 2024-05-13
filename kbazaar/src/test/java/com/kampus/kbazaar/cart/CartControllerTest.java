@@ -1,10 +1,14 @@
 package com.kampus.kbazaar.cart;
 
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kampus.kbazaar.security.JwtAuthFilter;
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,6 +35,7 @@ import org.springframework.test.web.servlet.MockMvc;
 public class CartControllerTest {
 
     @Autowired private MockMvc mockMvc;
+    @Autowired private ObjectMapper objectMapper;
 
     @MockBean private CartService cartService;
 
@@ -87,5 +92,27 @@ public class CartControllerTest {
                         get("/api/v1/carts/" + mockUsername)
                                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("should return 200 when promotion available")
+    public void shouldReturn200IfPromotionCodeAvailable() throws Exception {
+        String code = "TEST-PROMO-1";
+        String username = "test";
+        RequestBodyCode requestBodyCode = new RequestBodyCode(code);
+
+        when(cartService.usePromotionCode(username, requestBodyCode.code()))
+                .thenReturn(
+                        new CartResponse(
+                                username, new ArrayList<>(), BigDecimal.ZERO, BigDecimal.ZERO));
+
+        String jsonRequestBody = this.objectMapper.writeValueAsString(requestBodyCode);
+
+        mockMvc.perform(
+                        post("/api/v1/carts/" + username + "/promotions")
+                                .content(jsonRequestBody)
+                                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        verify(cartService, times(1)).usePromotionCode(username, requestBodyCode.code());
     }
 }

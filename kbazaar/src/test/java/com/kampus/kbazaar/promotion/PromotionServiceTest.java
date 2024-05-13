@@ -5,7 +5,6 @@ import static org.mockito.Mockito.*;
 
 import com.kampus.kbazaar.cart.CartRepository;
 import com.kampus.kbazaar.exceptions.NotFoundException;
-import com.kampus.kbazaar.shopper.Shopper;
 import com.kampus.kbazaar.shopper.ShopperRepository;
 import java.util.Arrays;
 import java.util.List;
@@ -71,54 +70,5 @@ class PromotionServiceTest {
 
         // Act & Assert
         assertThrows(NotFoundException.class, () -> promotionService.getPromotionByCode(code));
-    }
-
-    @Test
-    @DisplayName("should throw NotFoundException when can't find shopper")
-    public void shouldThrowNotFoundExceptionWhenNotFoundShopper() {
-        String username = "test";
-        String promotionCode = "TEST-CODE-1";
-        String expected = "Shopper " + username + " not have in ShopperRepo";
-        when(shopperRepository.findByUsername(username)).thenReturn(Optional.empty());
-
-        Exception actual =
-                assertThrows(
-                        NotFoundException.class,
-                        () -> promotionService.findCartOfShopper(username));
-
-        assertEquals(expected, actual.getMessage());
-    }
-
-    @Test
-    @DisplayName("should throw NotFoundException when can't find cart of shopper")
-    public void shouldThrowNotFoundExceptionWhenNotFoundCartOfShopper() {
-        String username = "test";
-        String promotionCode = "TEST-CODE-1";
-        String expected = "Can't use promotion code because " + username + " not have item in cart";
-
-        Shopper shopper = new Shopper();
-        shopper.setId(1L);
-        when(shopperRepository.findByUsername(username)).thenReturn(Optional.of(shopper));
-        when(cartRepository.findByShopper_Id(shopper.getId())).thenReturn(Optional.empty());
-
-        Exception actual =
-                assertThrows(
-                        NotFoundException.class,
-                        () -> promotionService.findCartOfShopper(username));
-
-        assertEquals(expected, actual.getMessage());
-    }
-
-    @Test
-    @DisplayName("should throw NotFoundException when can't find promotion code")
-    public void shouldThrowNotFoundExceptionWhenNotFoundPromotion() {
-        String code = "TEST-CODE-1";
-        when(promotionRepository.findByCode(code)).thenReturn(Optional.empty());
-        String expected = "Promotion not found";
-        Exception actual =
-                assertThrows(
-                        NotFoundException.class, () -> promotionService.findPromotionByCode(code));
-
-        assertEquals(expected, actual.getMessage());
     }
 }

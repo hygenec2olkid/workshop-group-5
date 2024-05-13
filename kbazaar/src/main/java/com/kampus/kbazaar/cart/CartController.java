@@ -29,6 +29,14 @@ public class CartController {
     public CartResponse getCartByUsername(@PathVariable String username) {
         return this.cartService.getCartByUsername(username);
     }
+
+    @PostMapping("/carts/{username}/promotions")
+    public CartResponse shopperUsePromotion(
+            @PathVariable String username, @RequestBody RequestBodyCode reqBody) {
+        return cartService.usePromotionCode(username, reqBody.code());
+    }
 }
 
 record ProductDetailBody(Long productSku, int quantity) {}
+
+record RequestBodyCode(String code) {}

@@ -10,6 +10,7 @@ import com.kampus.kbazaar.cartItem.CartItemResponse;
 import com.kampus.kbazaar.exceptions.NotFoundException;
 import com.kampus.kbazaar.product.Product;
 import com.kampus.kbazaar.product.ProductRepository;
+import com.kampus.kbazaar.promotion.PromotionRepository;
 import com.kampus.kbazaar.shopper.Shopper;
 import com.kampus.kbazaar.shopper.ShopperRepository;
 import java.math.BigDecimal;
@@ -27,6 +28,8 @@ class CartServiceTest {
     @Mock private ProductRepository productRepository;
     @Mock private ShopperRepository shopperRepository;
     @Mock private CartItemRepository cartItemRepository;
+
+    @Mock private PromotionRepository promotionRepository;
 
     @Mock private CartService mockedCartService;
     @InjectMocks private CartService cartService;
@@ -258,5 +261,51 @@ class CartServiceTest {
                 cartResponse.products());
         assertEquals(BigDecimal.ZERO, cartResponse.discount());
         assertEquals(BigDecimal.TEN, cartResponse.total());
+    }
+
+    @Test
+    @DisplayName("should throw NotFoundException when can't find shopper")
+    public void shouldThrowNotFoundExceptionWhenNotFoundShopper() {
+        String username = "test";
+        String promotionCode = "TEST-CODE-1";
+        String expected = "Shopper " + username + " not have in ShopperRepo";
+        when(shopperRepository.findByUsername(username)).thenReturn(Optional.empty());
+
+        Exception actual =
+                assertThrows(
+                        NotFoundException.class, () -> cartService.findCartOfShopper(username));
+
+        assertEquals(expected, actual.getMessage());
+    }
+
+    @Test
+    @DisplayName("should throw NotFoundException when can't find cart of shopper")
+    public void shouldThrowNotFoundExceptionWhenNotFoundCartOfShopper() {
+        String username = "test";
+        String promotionCode = "TEST-CODE-1";
+        String expected = "Can't use promotion code because " + username + " not have item in cart";
+
+        Shopper shopper = new Shopper();
+        shopper.setId(1L);
+        when(shopperRepository.findByUsername(username)).thenReturn(Optional.of(shopper));
+        when(cartRepository.findByShopper_Id(shopper.getId())).thenReturn(Optional.empty());
+
+        Exception actual =
+                assertThrows(
+                        NotFoundException.class, () -> cartService.findCartOfShopper(username));
+
+        assertEquals(expected, actual.getMessage());
+    }
+
+    @Test
+    @DisplayName("should throw NotFoundException when can't find promotion code")
+    public void shouldThrowNotFoundExceptionWhenNotFoundPromotion() {
+        String code = "TEST-CODE-1";
+        when(promotionRepository.findByCode(code)).thenReturn(Optional.empty());
+        String expected = "Promotion not found";
+        Exception actual =
+                assertThrows(NotFoundException.class, () -> cartService.findPromotionByCode(code));
+
+        assertEquals(expected, actual.getMessage());
     }
 }
