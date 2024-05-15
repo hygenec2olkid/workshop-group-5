@@ -1,11 +1,11 @@
 package com.kampus.kbazaar.cart;
 
+import com.kampus.kbazaar.cart.bodyReq.ProductDetailBody;
 import com.kampus.kbazaar.cartItem.CartItem;
 import com.kampus.kbazaar.cartItem.CartItemRepository;
 import com.kampus.kbazaar.exceptions.NotFoundException;
 import com.kampus.kbazaar.product.Product;
 import com.kampus.kbazaar.product.ProductRepository;
-import com.kampus.kbazaar.promotion.Promotion;
 import com.kampus.kbazaar.promotion.PromotionRepository;
 import com.kampus.kbazaar.shopper.Shopper;
 import com.kampus.kbazaar.shopper.ShopperRepository;
@@ -52,7 +52,7 @@ public class CartService {
         CartItem cartItem = new CartItem();
 
         Optional<Cart> _cartShopper = this.cartRepository.findByShopper_Id(shopper.getId());
-        // Case shopper not a cart
+        // Case shopper not have a cart
         if (_cartShopper.isEmpty()) {
             Cart cart = new Cart();
             cart.setShopper(shopper);
@@ -66,7 +66,9 @@ public class CartService {
             cartItem.setQuantity(productDetailBody.quantity());
             cartItem.setSubTotal(
                     product.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity())));
-
+            cartItem.setProductSku(product.getSku());
+            cartItem.setDiscount(BigDecimal.ZERO);
+            cartItem.setPromotionCode("");
             cart.setCartItemList(List.of(cartItem));
 
             this.cartRepository.save(cart);
@@ -84,6 +86,9 @@ public class CartService {
             cartItem.setQuantity(productDetailBody.quantity());
             cartItem.setSubTotal(
                     product.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity())));
+            cartItem.setProductSku(product.getSku());
+            cartItem.setDiscount(BigDecimal.ZERO);
+            cartItem.setPromotionCode("");
             this.cartItemRepository.save(cartItem);
             updateTotal(cartShopper);
             return cartShopper.toResponse();
@@ -119,38 +124,5 @@ public class CartService {
                                         new NotFoundException(
                                                 username + " not have any item in cart"));
         return cart.toResponse();
-    }
-
-    public CartResponse usePromotionCode(String username, String code) {
-        Cart cart = this.findCartOfShopper(username);
-        Promotion promotion = this.findPromotionByCode(code);
-        return cart.toResponse();
-    }
-
-    public Promotion findPromotionByCode(String code) {
-        return this.promotionRepository
-                .findByCode(code)
-                .orElseThrow(() -> new NotFoundException("Promotion not found"));
-    }
-
-    public Cart findCartOfShopper(String username) {
-        Shopper shopper =
-                this.shopperRepository
-                        .findByUsername(username)
-                        .orElseThrow(
-                                () ->
-                                        new NotFoundException(
-                                                "Shopper "
-                                                        + username
-                                                        + " not have in ShopperRepo"));
-
-        return this.cartRepository
-                .findByShopper_Id(shopper.getId())
-                .orElseThrow(
-                        () ->
-                                new NotFoundException(
-                                        "Can't use promotion code because "
-                                                + username
-                                                + " not have item in cart"));
     }
 }

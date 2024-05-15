@@ -46,8 +46,11 @@ public class Cart {
                         item ->
                                 new CartItemResponse(
                                         item.getProduct().getName(),
+                                        item.getProductSku(),
                                         item.getQuantity(),
-                                        item.getSubTotal()))
+                                        item.getSubTotal(),
+                                        item.getDiscount(),
+                                        item.getPromotionCode()))
                 .collect(Collectors.toList());
     }
 

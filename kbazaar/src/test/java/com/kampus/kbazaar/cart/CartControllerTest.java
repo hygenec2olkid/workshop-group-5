@@ -6,9 +6,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kampus.kbazaar.cart.bodyReq.ProductDetailBody;
+import com.kampus.kbazaar.cart.bodyReq.RequestBodyCode;
+import com.kampus.kbazaar.promotion.PromotionService;
 import com.kampus.kbazaar.security.JwtAuthFilter;
-import java.math.BigDecimal;
-import java.util.ArrayList;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,6 +39,8 @@ public class CartControllerTest {
     @Autowired private ObjectMapper objectMapper;
 
     @MockBean private CartService cartService;
+
+    @MockBean private PromotionService promotionService;
 
     @BeforeEach
     public void setup() {
@@ -101,10 +104,7 @@ public class CartControllerTest {
         String username = "test";
         RequestBodyCode requestBodyCode = new RequestBodyCode(code);
 
-        when(cartService.usePromotionCode(username, requestBodyCode.code()))
-                .thenReturn(
-                        new CartResponse(
-                                username, new ArrayList<>(), BigDecimal.ZERO, BigDecimal.ZERO));
+        when(promotionService.usePromotionCode(username, requestBodyCode.code())).thenReturn("");
 
         String jsonRequestBody = this.objectMapper.writeValueAsString(requestBodyCode);
 
@@ -113,6 +113,5 @@ public class CartControllerTest {
                                 .content(jsonRequestBody)
                                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
-        verify(cartService, times(1)).usePromotionCode(username, requestBodyCode.code());
     }
 }

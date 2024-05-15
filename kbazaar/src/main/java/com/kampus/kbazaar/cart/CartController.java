@@ -1,5 +1,8 @@
 package com.kampus.kbazaar.cart;
 
+import com.kampus.kbazaar.cart.bodyReq.ProductDetailBody;
+import com.kampus.kbazaar.cart.bodyReq.RequestBodyCode;
+import com.kampus.kbazaar.promotion.PromotionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -8,9 +11,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1")
 public class CartController {
     private final CartService cartService;
+    private final PromotionService promotionService;
 
-    public CartController(CartService cartService) {
+    public CartController(CartService cartService, PromotionService promotionService) {
         this.cartService = cartService;
+        this.promotionService = promotionService;
     }
 
     @GetMapping("/carts")
@@ -31,12 +36,8 @@ public class CartController {
     }
 
     @PostMapping("/carts/{username}/promotions")
-    public CartResponse shopperUsePromotion(
+    public String shopperUsePromotion(
             @PathVariable String username, @RequestBody RequestBodyCode reqBody) {
-        return cartService.usePromotionCode(username, reqBody.code());
+        return promotionService.usePromotionCode(username, reqBody.code());
     }
 }
-
-record ProductDetailBody(Long productSku, int quantity) {}
-
-record RequestBodyCode(String code) {}

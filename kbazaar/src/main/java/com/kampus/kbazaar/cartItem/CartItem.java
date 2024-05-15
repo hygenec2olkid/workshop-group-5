@@ -32,4 +32,13 @@ public class CartItem {
 
     @NotNull @Column(name = "sub_total", nullable = false)
     private BigDecimal subTotal;
+
+    @NotNull @Column(name = "product_sku", nullable = false)
+    private String productSku;
+
+    @NotNull @Column(name = "discount", nullable = false)
+    private BigDecimal discount;
+
+    @NotNull @Column(name = "promotion_code", nullable = false)
+    private String promotionCode;
 }
