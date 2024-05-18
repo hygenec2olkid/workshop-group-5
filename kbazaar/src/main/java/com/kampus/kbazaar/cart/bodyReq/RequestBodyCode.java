@@ -1,3 +1,3 @@
 package com.kampus.kbazaar.cart.bodyReq;
 
-public record RequestBodyCode(String code) {}
+public record RequestBodyCode(String code, String productSkus) {}

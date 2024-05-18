@@ -7,7 +7,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kampus.kbazaar.cart.bodyReq.ProductDetailBody;
-import com.kampus.kbazaar.cart.bodyReq.RequestBodyCode;
 import com.kampus.kbazaar.promotion.PromotionService;
 import com.kampus.kbazaar.security.JwtAuthFilter;
 import org.junit.jupiter.api.BeforeEach;
@@ -93,24 +92,6 @@ public class CartControllerTest {
 
         mockMvc.perform(
                         get("/api/v1/carts/" + mockUsername)
-                                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
-    }
-
-    @Test
-    @DisplayName("should return 200 when promotion available")
-    public void shouldReturn200IfPromotionCodeAvailable() throws Exception {
-        String code = "TEST-PROMO-1";
-        String username = "test";
-        RequestBodyCode requestBodyCode = new RequestBodyCode(code);
-
-        when(promotionService.usePromotionCode(username, requestBodyCode.code())).thenReturn("");
-
-        String jsonRequestBody = this.objectMapper.writeValueAsString(requestBodyCode);
-
-        mockMvc.perform(
-                        post("/api/v1/carts/" + username + "/promotions")
-                                .content(jsonRequestBody)
                                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
     }

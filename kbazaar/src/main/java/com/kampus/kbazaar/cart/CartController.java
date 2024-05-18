@@ -36,8 +36,8 @@ public class CartController {
     }
 
     @PostMapping("/carts/{username}/promotions")
-    public String shopperUsePromotion(
+    public String usePromoSpecific(
             @PathVariable String username, @RequestBody RequestBodyCode reqBody) {
-        return promotionService.usePromotionCode(username, reqBody.code());
+        return this.promotionService.handleUsePromoSpecific(username, reqBody);
     }
 }
