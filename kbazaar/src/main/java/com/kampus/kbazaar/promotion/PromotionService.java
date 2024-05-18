@@ -2,13 +2,18 @@ package com.kampus.kbazaar.promotion;
 
 import com.kampus.kbazaar.cart.Cart;
 import com.kampus.kbazaar.cart.CartRepository;
+import com.kampus.kbazaar.cart.CartResponse;
 import com.kampus.kbazaar.cart.bodyReq.RequestBodyCode;
 import com.kampus.kbazaar.cartItem.CartItem;
 import com.kampus.kbazaar.cartItem.CartItemRepository;
 import com.kampus.kbazaar.exceptions.NotFoundException;
+import com.kampus.kbazaar.exceptions.PromoCodeExpiredException;
+import com.kampus.kbazaar.exceptions.PromoCodeNotApplicableException;
 import com.kampus.kbazaar.product.Product;
 import com.kampus.kbazaar.product.ProductRepository;
 import com.kampus.kbazaar.shopper.ShopperRepository;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import org.springframework.stereotype.Service;
 
@@ -48,14 +53,76 @@ public class PromotionService {
                 .orElseThrow(() -> new NotFoundException("Promotion not found"));
     }
 
-    public String handleUsePromoSpecific(String username, RequestBodyCode req) {
-        if (checkProductInCart(username, req)) {
-            return "true";
+    public CartResponse handleUsePromoSpecific(String username, RequestBodyCode req) {
+        Promotion promotion =
+                this.promotionRepository
+                        .findByCode(req.code())
+                        .orElseThrow(
+                                () ->
+                                        new NotFoundException(
+                                                String.format(
+                                                        "not found promoCode: %s", req.code())));
+
+        if (checkProductInCart(req)) {
+            if (validateTimeAvailable(promotion)) {
+                CartItem cartItem = findCartItem(username, req);
+                updatePriceByDiscountType(promotion, cartItem);
+                return cartItem.getCart().toResponse();
+            }
+            throw new PromoCodeExpiredException("promotion code is expire");
         }
-        return "false";
+        throw new PromoCodeNotApplicableException(
+                "Can't use this promoCode for product " + req.productSkus());
     }
 
-    private boolean checkProductInCart(String username, RequestBodyCode req) {
+    private void updatePriceByDiscountType(Promotion promo, CartItem cartItem) {
+        switch (promo.getDiscountType()) {
+            case "FIXED_AMOUNT":
+                BigDecimal discount = promo.getDiscountAmount();
+                cartItem.setDiscount(discount);
+                cartItem.setPromotionCode(promo.getCode());
+                this.cartItemRepository.save(cartItem);
+                updateCartTotal(cartItem.getCart(), promo);
+                break;
+            case "PERCENTAGE":
+                break;
+            case "buy1_get1":
+                break;
+            case "buy2_get1":
+                break;
+        }
+    }
+
+    private void updateCartTotal(Cart cart, Promotion promo) {
+        List<CartItem> cartItemList = this.cartItemRepository.findByCartId(cart.getId());
+
+        BigDecimal discount =
+                cartItemList.stream()
+                        .map(CartItem::getDiscount)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal total =
+                cartItemList.stream()
+                        .map(CartItem::getSubTotal)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        cart.setTotal(total.subtract(discount));
+        cart.setDiscount(discount);
+        cart.setPromotion(promo);
+        this.cartRepository.save(cart);
+        cart.toResponse();
+    }
+
+    private boolean validateTimeAvailable(Promotion promo) {
+        LocalDate localDate = LocalDate.now();
+
+        LocalDate startDate = LocalDate.from(promo.getStartDate());
+        LocalDate endDate = LocalDate.from(promo.getEndDate());
+
+        return localDate.isAfter(startDate) && localDate.isBefore(endDate);
+    }
+
+    private CartItem findCartItem(String username, RequestBodyCode req) {
         Cart cart =
                 this.cartRepository
                         .findByShopper_name(username)
@@ -75,16 +142,16 @@ public class PromotionService {
                                                         "not found productSku: %s",
                                                         req.productSkus())));
 
-        CartItem cartItem =
-                this.cartItemRepository
-                        .findByCartIdAndProductId(cart.getId(), product.getId())
-                        .orElseThrow(
-                                () ->
-                                        new NotFoundException(
-                                                String.format(
-                                                        "%s not have this product in cart",
-                                                        username)));
+        return this.cartItemRepository
+                .findByCartIdAndProductId(cart.getId(), product.getId())
+                .orElseThrow(
+                        () ->
+                                new NotFoundException(
+                                        String.format(
+                                                "%s not have this product in cart", username)));
+    }
 
+    public boolean checkProductInCart(RequestBodyCode req) {
         String product_skus =
                 this.promotionRepository
                         .findProductSkuByCode(req.code())

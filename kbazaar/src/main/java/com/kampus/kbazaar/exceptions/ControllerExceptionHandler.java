@@ -52,4 +52,28 @@ public class ControllerExceptionHandler {
                 internalServerException.getMessage(),
                 request.getDescription(false));
     }
+
+    @ExceptionHandler(value = {PromoCodeExpiredException.class})
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiErrorResponse handlePromoCodeExpiredException(
+            PromoCodeExpiredException promoCodeExpiredException, WebRequest request) {
+        return new ApiErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                promoCodeExpiredException.getMessage(),
+                request.getDescription(false));
+    }
+
+    @ExceptionHandler(value = {PromoCodeNotApplicableException.class})
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiErrorResponse handlePromoCodeNotApplicableExceptionException(
+            PromoCodeNotApplicableException promoCodeNotApplicableException, WebRequest request) {
+        return new ApiErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                promoCodeNotApplicableException.getMessage(),
+                request.getDescription(false));
+    }
 }

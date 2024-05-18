@@ -36,7 +36,7 @@ public class CartController {
     }
 
     @PostMapping("/carts/{username}/promotions")
-    public String usePromoSpecific(
+    public CartResponse usePromoSpecific(
             @PathVariable String username, @RequestBody RequestBodyCode reqBody) {
         return this.promotionService.handleUsePromoSpecific(username, reqBody);
     }
