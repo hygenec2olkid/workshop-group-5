@@ -75,7 +75,30 @@ public class PromotionService {
                 "Can't use this promoCode for product " + req.productSkus());
     }
 
-    private void updatePriceByDiscountType(Promotion promo, CartItem cartItem) {
+    public boolean checkProductInCart(RequestBodyCode req) {
+        String product_skus =
+                this.promotionRepository
+                        .findProductSkuByCode(req.code())
+                        .orElseThrow(
+                                () ->
+                                        new NotFoundException(
+                                                String.format(
+                                                        "not found promotionCode: %s",
+                                                        req.code())));
+
+        return product_skus.contains(req.productSkus());
+    }
+
+    public boolean validateTimeAvailable(Promotion promo) {
+        LocalDate localDate = LocalDate.now();
+
+        LocalDate startDate = LocalDate.from(promo.getStartDate());
+        LocalDate endDate = LocalDate.from(promo.getEndDate());
+
+        return localDate.isAfter(startDate) && localDate.isBefore(endDate);
+    }
+
+    public void updatePriceByDiscountType(Promotion promo, CartItem cartItem) {
         switch (promo.getDiscountType()) {
             case "FIXED_AMOUNT":
                 BigDecimal discount = promo.getDiscountAmount();
@@ -93,7 +116,7 @@ public class PromotionService {
         }
     }
 
-    private void updateCartTotal(Cart cart, Promotion promo) {
+    public void updateCartTotal(Cart cart, Promotion promo) {
         List<CartItem> cartItemList = this.cartItemRepository.findByCartId(cart.getId());
 
         BigDecimal discount =
@@ -113,16 +136,7 @@ public class PromotionService {
         cart.toResponse();
     }
 
-    private boolean validateTimeAvailable(Promotion promo) {
-        LocalDate localDate = LocalDate.now();
-
-        LocalDate startDate = LocalDate.from(promo.getStartDate());
-        LocalDate endDate = LocalDate.from(promo.getEndDate());
-
-        return localDate.isAfter(startDate) && localDate.isBefore(endDate);
-    }
-
-    private CartItem findCartItem(String username, RequestBodyCode req) {
+    public CartItem findCartItem(String username, RequestBodyCode req) {
         Cart cart =
                 this.cartRepository
                         .findByShopper_name(username)
@@ -149,19 +163,5 @@ public class PromotionService {
                                 new NotFoundException(
                                         String.format(
                                                 "%s not have this product in cart", username)));
-    }
-
-    public boolean checkProductInCart(RequestBodyCode req) {
-        String product_skus =
-                this.promotionRepository
-                        .findProductSkuByCode(req.code())
-                        .orElseThrow(
-                                () ->
-                                        new NotFoundException(
-                                                String.format(
-                                                        "not found promotionCode: %s",
-                                                        req.code())));
-
-        return product_skus.contains(req.productSkus());
     }
 }
