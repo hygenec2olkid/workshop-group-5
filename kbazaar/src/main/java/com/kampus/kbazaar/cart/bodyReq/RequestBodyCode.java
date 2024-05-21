@@ -1,3 +1,5 @@
 package com.kampus.kbazaar.cart.bodyReq;
 
-public record RequestBodyCode(String code, String productSkus) {}
+import java.util.Optional;
+
+public record RequestBodyCode(String code, Optional<String> productSkus) {}

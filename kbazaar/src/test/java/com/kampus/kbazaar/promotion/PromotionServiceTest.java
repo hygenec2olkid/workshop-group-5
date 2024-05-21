@@ -15,7 +15,6 @@ import com.kampus.kbazaar.exceptions.PromoCodeNotApplicableException;
 import com.kampus.kbazaar.product.Product;
 import com.kampus.kbazaar.product.ProductRepository;
 import com.kampus.kbazaar.shopper.Shopper;
-import com.kampus.kbazaar.shopper.ShopperRepository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -31,7 +30,6 @@ import org.mockito.MockitoAnnotations;
 class PromotionServiceTest {
 
     @Mock private PromotionRepository promotionRepository;
-    @Mock private ShopperRepository shopperRepository;
     @Mock private CartRepository cartRepository;
     @Mock private CartItemRepository cartItemRepository;
     @Mock private ProductRepository productRepository;
@@ -80,7 +78,7 @@ class PromotionServiceTest {
 
         product_skus = "PRODUCT-SKUS1,PRODUCT-SKUS2";
 
-        req = new RequestBodyCode("PROMO1", "PRODUCT-SKUS1");
+        req = new RequestBodyCode("PROMO1", Optional.of("PRODUCT-SKUS1"));
         MockitoAnnotations.openMocks(this);
     }
 
@@ -134,7 +132,7 @@ class PromotionServiceTest {
         when(promotionRepository.findProductSkuByCode(req.code()))
                 .thenReturn(Optional.of(product_skus));
         when(cartRepository.findByShopper_name("username")).thenReturn(Optional.of(cart));
-        when(productRepository.findBySku(req.productSkus())).thenReturn(Optional.of(product));
+        when(productRepository.findBySku(req.productSkus().get())).thenReturn(Optional.of(product));
         when(cartItemRepository.findByCartIdAndProductId(1L, 1L)).thenReturn(Optional.of(cartItem));
         when(cartItemRepository.findByCartId(1L)).thenReturn(List.of(cartItem));
 
@@ -148,7 +146,7 @@ class PromotionServiceTest {
 
     @Test
     void testThrowNotFoundException_Promotion() {
-        RequestBodyCode req = new RequestBodyCode("PROMO1", "PRODUCT-SKUS1");
+        RequestBodyCode req = new RequestBodyCode("PROMO1", Optional.of("PRODUCT-SKUS1"));
         when(promotionRepository.findByCode(req.code())).thenReturn(Optional.empty());
 
         Exception actual =
@@ -162,8 +160,11 @@ class PromotionServiceTest {
 
     @Test
     void testThrowPromotionNotApplied() {
-        req = new RequestBodyCode("PROMO3", "PRODUCT-SKUS3");
+        req = new RequestBodyCode("PROMO3", Optional.of("PRODUCT-SKUS3"));
         when(promotionRepository.findByCode(req.code())).thenReturn(Optional.of(promotion));
+        when(cartRepository.findByShopper_name("test")).thenReturn(Optional.of(cart));
+        when(productRepository.findBySku(req.productSkus().get())).thenReturn(Optional.of(product));
+        when(cartItemRepository.findByCartIdAndProductId(1L, 1L)).thenReturn(Optional.of(cartItem));
         when(promotionRepository.findProductSkuByCode(req.code()))
                 .thenReturn(Optional.of(product_skus));
 
@@ -173,7 +174,7 @@ class PromotionServiceTest {
                         () -> promotionService.handleUsePromoSpecific("test", req));
 
         String expected =
-                String.format("Can't use this promoCode for product %s", req.productSkus());
+                String.format("Can't use this promoCode for product %s", req.productSkus().get());
         assertEquals(expected, actual.getMessage());
     }
 
@@ -182,6 +183,9 @@ class PromotionServiceTest {
         promotion.setStartDate(LocalDateTime.now().minusDays(2));
         promotion.setEndDate(LocalDateTime.now().minusDays(1));
 
+        when(cartRepository.findByShopper_name("test")).thenReturn(Optional.of(cart));
+        when(productRepository.findBySku(req.productSkus().get())).thenReturn(Optional.of(product));
+        when(cartItemRepository.findByCartIdAndProductId(1L, 1L)).thenReturn(Optional.of(cartItem));
         when(promotionRepository.findByCode(req.code())).thenReturn(Optional.of(promotion));
         when(promotionRepository.findProductSkuByCode(req.code()))
                 .thenReturn(Optional.of(product_skus));
@@ -201,7 +205,7 @@ class PromotionServiceTest {
 
         Exception actual =
                 assertThrows(
-                        NotFoundException.class, () -> promotionService.checkProductInCart(req));
+                        NotFoundException.class, () -> promotionService.checkCodeAvailable(req));
 
         String expected = String.format("not found promotionCode: %s", req.code());
         assertEquals(expected, actual.getMessage());
@@ -222,25 +226,27 @@ class PromotionServiceTest {
     @Test
     void testThrowNotFoundException_findCartItem_product() {
         when(cartRepository.findByShopper_name("test")).thenReturn(Optional.of(cart));
-        when(productRepository.findBySku(req.productSkus())).thenReturn(Optional.empty());
+        when(productRepository.findBySku(req.productSkus().get())).thenReturn(Optional.empty());
 
         Exception actual =
                 assertThrows(
                         NotFoundException.class, () -> promotionService.findCartItem("test", req));
 
-        String expected = String.format("not found productSku: %s", req.productSkus());
+        String expected = String.format("not found productSku: %s", req.productSkus().get());
         assertEquals(expected, actual.getMessage());
     }
 
     @Test
     void testThrowNotFoundException_findCartItem_cartItem() {
+        when(promotionRepository.findByCode("PROMO1")).thenReturn(Optional.of(promotion));
         when(cartRepository.findByShopper_name("test")).thenReturn(Optional.of(cart));
-        when(productRepository.findBySku(req.productSkus())).thenReturn(Optional.of(product));
+        when(productRepository.findBySku("PRODUCT-SKUS1")).thenReturn(Optional.of(product));
         when(cartItemRepository.findByCartIdAndProductId(1L, 1L)).thenReturn(Optional.empty());
 
         Exception actual =
                 assertThrows(
-                        NotFoundException.class, () -> promotionService.findCartItem("test", req));
+                        NotFoundException.class,
+                        () -> promotionService.handleUsePromoSpecific("test", req));
 
         String expected = "test not have this product in cart";
         assertEquals(expected, actual.getMessage());

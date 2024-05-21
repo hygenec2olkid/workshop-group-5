@@ -97,14 +97,31 @@ public class CartControllerTest {
     }
 
     @Test
-    @DisplayName("should return status 200 after use promotion code")
-    public void shouldReturn200AfterUsePromotionCode() throws Exception {
+    @DisplayName("should return status 200 after use promotion code specific")
+    public void shouldReturn200AfterUsePromotionCodeSpecific() throws Exception {
         String username = "TEST";
         String requestBody =
                 """
                 {
                         "code": "FIXEDAMOUNT2",
                         "productSkus": "MOBILE-APPLE-IPHONE-12-PRO"
+                  }""";
+
+        mockMvc.perform(
+                        post("/api/v1/carts/" + username + "/promotions")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(requestBody))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("should return status 200 after use promotion code")
+    public void shouldReturn200AfterUsePromotionCode() throws Exception {
+        String username = "TEST";
+        String requestBody =
+                """
+                {
+                        "code": "FIXEDAMOUNT2"
                   }""";
 
         mockMvc.perform(
