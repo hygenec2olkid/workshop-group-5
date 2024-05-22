@@ -6,7 +6,6 @@ import com.kampus.kbazaar.cartItem.CartItemRepository;
 import com.kampus.kbazaar.exceptions.NotFoundException;
 import com.kampus.kbazaar.product.Product;
 import com.kampus.kbazaar.product.ProductRepository;
-import com.kampus.kbazaar.promotion.PromotionRepository;
 import com.kampus.kbazaar.shopper.Shopper;
 import com.kampus.kbazaar.shopper.ShopperRepository;
 import java.math.BigDecimal;
@@ -20,19 +19,16 @@ public class CartService {
     private final ProductRepository productRepository;
     private final ShopperRepository shopperRepository;
     private final CartItemRepository cartItemRepository;
-    private final PromotionRepository promotionRepository;
 
     public CartService(
             CartRepository cartRepository,
             ProductRepository productRepository,
             ShopperRepository shopperRepository,
-            CartItemRepository cartItemRepository,
-            PromotionRepository promotionRepository) {
+            CartItemRepository cartItemRepository) {
         this.cartRepository = cartRepository;
         this.productRepository = productRepository;
         this.shopperRepository = shopperRepository;
         this.cartItemRepository = cartItemRepository;
-        this.promotionRepository = promotionRepository;
     }
 
     public CartResponse addProductToCart(String userName, ProductDetailBody productDetailBody) {
@@ -56,10 +52,10 @@ public class CartService {
         if (_cartShopper.isEmpty()) {
             Cart cart = new Cart();
             cart.setShopper(shopper);
-            cart.setDiscount(BigDecimal.valueOf(0));
             BigDecimal total =
                     product.getPrice().multiply(BigDecimal.valueOf(productDetailBody.quantity()));
             cart.setTotal(total);
+            cart.setFinalTotal(total);
 
             cartItem.setCart(cart);
             cartItem.setProduct(product);
@@ -112,6 +108,7 @@ public class CartService {
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         cart.setTotal(total);
+        cart.setFinalTotal(total);
         this.cartRepository.save(cart);
     }
 

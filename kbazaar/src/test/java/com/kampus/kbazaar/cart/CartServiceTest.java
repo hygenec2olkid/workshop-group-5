@@ -11,7 +11,6 @@ import com.kampus.kbazaar.cartItem.CartItemResponse;
 import com.kampus.kbazaar.exceptions.NotFoundException;
 import com.kampus.kbazaar.product.Product;
 import com.kampus.kbazaar.product.ProductRepository;
-import com.kampus.kbazaar.promotion.PromotionRepository;
 import com.kampus.kbazaar.shopper.Shopper;
 import com.kampus.kbazaar.shopper.ShopperRepository;
 import java.math.BigDecimal;
@@ -30,9 +29,6 @@ class CartServiceTest {
     @Mock private ShopperRepository shopperRepository;
     @Mock private CartItemRepository cartItemRepository;
 
-    @Mock private PromotionRepository promotionRepository;
-
-    @Mock private CartService mockedCartService;
     @InjectMocks private CartService cartService;
 
     @BeforeEach
@@ -58,9 +54,12 @@ class CartServiceTest {
         CartResponse actual = cartService.addProductToCart(mockUserName, productDetailBody);
 
         assertEquals(BigDecimal.valueOf(30), actual.total());
+        assertEquals(BigDecimal.valueOf(30), actual.finalTotal());
         assertEquals(1, actual.products().size());
         assertEquals(mockUserName, actual.userName());
         assertEquals(BigDecimal.ZERO, actual.discount());
+        assertEquals(BigDecimal.ZERO, actual.totalDiscount());
+        assertEquals("", actual.promotionCode());
     }
 
     @Test
@@ -112,8 +111,11 @@ class CartServiceTest {
         CartResponse actual = cartService.addProductToCart(mockUserName, productDetailBody);
 
         assertEquals(BigDecimal.valueOf(60), actual.total());
+        assertEquals(BigDecimal.valueOf(60), actual.finalTotal());
         assertEquals(mockUserName, actual.userName());
         assertEquals(BigDecimal.ZERO, actual.discount());
+        assertEquals(BigDecimal.ZERO, actual.totalDiscount());
+        assertEquals("", actual.promotionCode());
     }
 
     @Test
@@ -155,8 +157,11 @@ class CartServiceTest {
         CartResponse actual = cartService.addProductToCart(mockUserName, productDetailBody);
 
         assertEquals(BigDecimal.valueOf(10), actual.total());
+        assertEquals(BigDecimal.valueOf(10), actual.finalTotal());
         assertEquals(mockUserName, actual.userName());
         assertEquals(BigDecimal.ZERO, actual.discount());
+        assertEquals(BigDecimal.ZERO, actual.totalDiscount());
+        assertEquals("", actual.promotionCode());
     }
 
     @Test
@@ -214,6 +219,7 @@ class CartServiceTest {
         cartService.updateTotal(cart);
 
         assertEquals(BigDecimal.valueOf(110), cart.getTotal());
+        verify(cartRepository, times(1)).save(cart);
     }
 
     @Test
@@ -249,6 +255,7 @@ class CartServiceTest {
         cart.setShopper(shopper);
         cart.setCartItemList(List.of(cartItem));
         cart.setTotal(BigDecimal.TEN);
+        cart.setFinalTotal(BigDecimal.TEN);
         cart.setDiscount(BigDecimal.ZERO);
 
         when(cartRepository.findByShopper_name(mockUsername)).thenReturn(Optional.of(cart));
@@ -266,7 +273,10 @@ class CartServiceTest {
                                 cartItem.getDiscount(),
                                 cartItem.getPromotionCode())),
                 cartResponse.products());
+        assertEquals("", cartResponse.promotionCode());
         assertEquals(BigDecimal.ZERO, cartResponse.discount());
+        assertEquals(BigDecimal.ZERO, cartResponse.totalDiscount());
         assertEquals(BigDecimal.TEN, cartResponse.total());
+        assertEquals(BigDecimal.TEN, cartResponse.finalTotal());
     }
 }

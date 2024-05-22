@@ -38,7 +38,16 @@ public class Cart {
     private BigDecimal total;
 
     @NotNull @Column(name = "discount", nullable = false, precision = 10, scale = 2)
-    private BigDecimal discount;
+    private BigDecimal discount = BigDecimal.ZERO;
+
+    @NotNull @Column(name = "total_discount", nullable = false, precision = 10, scale = 2)
+    private BigDecimal totalDiscount = BigDecimal.ZERO;
+
+    @NotNull @Column(name = "final_total", nullable = false, precision = 10, scale = 2)
+    private BigDecimal finalTotal;
+
+    @NotNull @Column(name = "promotion_code", nullable = false)
+    private String promotionCode = "";
 
     private List<CartItemResponse> getCartItemList() {
         return cartItemList.stream()
@@ -56,6 +65,12 @@ public class Cart {
 
     public CartResponse toResponse() {
         return new CartResponse(
-                this.shopper.getUsername(), getCartItemList(), this.total, this.discount);
+                this.shopper.getUsername(),
+                getCartItemList(),
+                this.promotionCode,
+                this.discount,
+                this.totalDiscount,
+                this.total,
+                this.finalTotal);
     }
 }
