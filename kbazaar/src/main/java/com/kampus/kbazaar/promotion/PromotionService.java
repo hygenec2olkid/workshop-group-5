@@ -14,7 +14,6 @@ import com.kampus.kbazaar.product.ProductRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -58,6 +57,7 @@ public class PromotionService {
     }
 
     public CartResponse handleUsePromoGeneral(String username, RequestBodyCode req) {
+        Promotion promotion = getPromotion(req.code());
         Cart cart =
                 this.cartRepository
                         .findByShopper_name(username)
@@ -68,14 +68,8 @@ public class PromotionService {
     public CartResponse handleUsePromoSpecific(String username, RequestBodyCode req) {
         Promotion promotion = getPromotion(req.code());
 
-        CartItem cartItem =
-                findCartItem(username, req)
-                        .orElseThrow(
-                                () ->
-                                        new NotFoundException(
-                                                String.format(
-                                                        "%s not have this product in cart",
-                                                        username)));
+        CartItem cartItem = findCartItem(username, req);
+
         if (checkCodeAvailable(req)) {
             if (validateTimeAvailable(promotion)) {
                 updatePriceByDiscountType(promotion, cartItem);
@@ -157,7 +151,7 @@ public class PromotionService {
         cart.toResponse();
     }
 
-    public Optional<CartItem> findCartItem(String username, RequestBodyCode req) {
+    public CartItem findCartItem(String username, RequestBodyCode req) {
         Cart cart =
                 this.cartRepository
                         .findByShopper_name(username)
@@ -177,6 +171,12 @@ public class PromotionService {
                                                         "not found productSku: %s",
                                                         req.productSkus().get())));
 
-        return this.cartItemRepository.findByCartIdAndProductId(cart.getId(), product.getId());
+        return this.cartItemRepository
+                .findByCartIdAndProductId(cart.getId(), product.getId())
+                .orElseThrow(
+                        () ->
+                                new NotFoundException(
+                                        String.format(
+                                                "%s not have this product in cart", username)));
     }
 }
