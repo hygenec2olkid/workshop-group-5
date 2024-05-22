@@ -138,8 +138,12 @@ class PromotionServiceTest {
 
         CartResponse actual = promotionService.handleUsePromoSpecific("username", req);
 
-        assertEquals(BigDecimal.TEN, actual.discount());
-        assertEquals(BigDecimal.valueOf(90), actual.total());
+        assertEquals("username", actual.userName());
+        assertEquals(BigDecimal.ZERO, actual.discount());
+        assertEquals("", actual.promotionCode());
+        assertEquals(BigDecimal.valueOf(100), actual.total());
+        assertEquals(BigDecimal.TEN, actual.totalDiscount());
+        assertEquals(BigDecimal.valueOf(90), actual.finalTotal());
         verify(cartItemRepository, times(1)).save(cartItem);
         verify(cartRepository, times(1)).save(cart);
     }

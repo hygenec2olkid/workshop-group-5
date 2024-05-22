@@ -150,9 +150,9 @@ public class PromotionService {
                         .map(CartItem::getSubTotal)
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        cart.setTotal(total.subtract(discount));
-        cart.setDiscount(discount);
-        cart.setPromotion(promo);
+        cart.setTotal(total);
+        cart.setTotalDiscount(discount);
+        cart.setFinalTotal(cart.getTotal().subtract(cart.getTotalDiscount()));
         this.cartRepository.save(cart);
         cart.toResponse();
     }
