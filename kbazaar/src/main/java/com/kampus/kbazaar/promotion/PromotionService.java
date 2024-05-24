@@ -11,6 +11,7 @@ import com.kampus.kbazaar.exceptions.PromoCodeExpiredException;
 import com.kampus.kbazaar.exceptions.PromoCodeNotApplicableException;
 import com.kampus.kbazaar.product.Product;
 import com.kampus.kbazaar.product.ProductRepository;
+import com.kampus.kbazaar.util.BigDecimalPercentages;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -26,15 +27,19 @@ public class PromotionService {
 
     private final ProductRepository productRepository;
 
+    private final BigDecimalPercentages bigDecimalPercentages;
+
     public PromotionService(
             PromotionRepository promotionRepository,
             CartRepository cartRepository,
             CartItemRepository cartItemRepository,
-            ProductRepository productRepository) {
+            ProductRepository productRepository,
+            BigDecimalPercentages bigDecimalPercentages) {
         this.promotionRepository = promotionRepository;
         this.cartRepository = cartRepository;
         this.cartItemRepository = cartItemRepository;
         this.productRepository = productRepository;
+        this.bigDecimalPercentages = bigDecimalPercentages;
     }
 
     public List<PromotionResponse> getAll() {
@@ -58,11 +63,21 @@ public class PromotionService {
 
     public CartResponse handleUsePromoGeneral(String username, RequestBodyCode req) {
         Promotion promotion = getPromotion(req.code());
+
         Cart cart =
                 this.cartRepository
                         .findByShopper_name(username)
                         .orElseThrow(() -> new NotFoundException("not ufnd"));
-        return cart.toResponse();
+
+        if (validateTimeAvailable(promotion)) {
+
+            if ("ENTIRE_CART".equals(promotion.getApplicableTo())) {
+                handleAppliedToEntireCart(promotion, cart);
+                return cart.toResponse();
+            }
+            throw new PromoCodeNotApplicableException("Invalid promotion code");
+        }
+        throw new PromoCodeExpiredException("promotion code is expire");
     }
 
     public CartResponse handleUsePromoSpecific(String username, RequestBodyCode req) {
@@ -114,41 +129,55 @@ public class PromotionService {
     }
 
     public void updatePriceByDiscountType(Promotion promo, CartItem cartItem) {
-        switch (promo.getDiscountType()) {
-            case "FIXED_AMOUNT":
-                BigDecimal discount = promo.getDiscountAmount();
-                cartItem.setDiscount(discount);
-                cartItem.setPromotionCode(promo.getCode());
-                this.cartItemRepository.save(cartItem);
-                updateCartTotal(cartItem.getCart(), promo);
-                break;
-            case "PERCENTAGE":
-                break;
-            case "buy1_get1":
-                break;
-            case "buy2_get1":
-                break;
-        }
+        BigDecimal discount = calDiscount(promo, cartItem.getSubTotal());
+        updateCartItem(discount, cartItem, promo);
+        updateCartTotal(cartItem.getCart(), cartItem.getCart().getDiscount());
     }
 
-    public void updateCartTotal(Cart cart, Promotion promo) {
+    public void handleAppliedToEntireCart(Promotion promo, Cart cart) {
+        BigDecimal discount = calDiscount(promo, cart.getTotal());
+        cart.setPromotion(promo);
+        cart.setPromotionCode(promo.getCode());
+        updateCartTotal(cart, discount);
+    }
+
+    private BigDecimal calDiscount(Promotion promo, BigDecimal total) {
+        BigDecimal discount = promo.getDiscountAmount();
+        if ("FIXED_AMOUNT".equals(promo.getDiscountType())) {
+            BigDecimal maxDiscount = promo.getMaxDiscountAmount();
+            if (maxDiscount != null && discount.compareTo(maxDiscount) > 0) {
+                discount = maxDiscount;
+            }
+
+        } else if ("PERCENTAGE".equals(promo.getDiscountType())) {
+            discount = bigDecimalPercentages.percentOf(discount, total);
+            BigDecimal maxDiscount = promo.getMaxDiscountAmount();
+            if (maxDiscount != null && discount.compareTo(maxDiscount) > 0) {
+                discount = maxDiscount;
+            }
+        }
+
+        return discount;
+    }
+
+    public void updateCartTotal(Cart cart, BigDecimal discount) {
         List<CartItem> cartItemList = this.cartItemRepository.findByCartId(cart.getId());
 
-        BigDecimal discount =
+        BigDecimal subDiscount =
                 cartItemList.stream()
                         .map(CartItem::getDiscount)
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal total =
-                cartItemList.stream()
-                        .map(CartItem::getSubTotal)
-                        .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        cart.setTotal(total);
-        cart.setTotalDiscount(discount);
+        cart.setDiscount(discount);
+        cart.setTotalDiscount(cart.getDiscount().add(subDiscount));
         cart.setFinalTotal(cart.getTotal().subtract(cart.getTotalDiscount()));
         this.cartRepository.save(cart);
-        cart.toResponse();
+    }
+
+    public void updateCartItem(BigDecimal discount, CartItem cartItem, Promotion promo) {
+        cartItem.setDiscount(discount);
+        cartItem.setPromotionCode(promo.getCode());
+        this.cartItemRepository.save(cartItem);
     }
 
     public CartItem findCartItem(String username, RequestBodyCode req) {

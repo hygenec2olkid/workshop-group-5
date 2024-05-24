@@ -108,7 +108,7 @@ public class CartService {
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         cart.setTotal(total);
-        cart.setFinalTotal(total);
+        cart.setFinalTotal(total.subtract(cart.getTotalDiscount()));
         this.cartRepository.save(cart);
     }
 

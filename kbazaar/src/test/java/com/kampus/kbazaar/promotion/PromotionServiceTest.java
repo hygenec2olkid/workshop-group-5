@@ -15,6 +15,7 @@ import com.kampus.kbazaar.exceptions.PromoCodeNotApplicableException;
 import com.kampus.kbazaar.product.Product;
 import com.kampus.kbazaar.product.ProductRepository;
 import com.kampus.kbazaar.shopper.Shopper;
+import com.kampus.kbazaar.util.BigDecimalPercentages;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -33,6 +34,8 @@ class PromotionServiceTest {
     @Mock private CartRepository cartRepository;
     @Mock private CartItemRepository cartItemRepository;
     @Mock private ProductRepository productRepository;
+
+    @Mock private BigDecimalPercentages bigDecimalPercentages;
     @InjectMocks private PromotionService promotionService;
     private Promotion promotion;
     private Shopper shopper;
@@ -136,7 +139,7 @@ class PromotionServiceTest {
         when(cartItemRepository.findByCartIdAndProductId(1L, 1L)).thenReturn(Optional.of(cartItem));
         when(cartItemRepository.findByCartId(1L)).thenReturn(List.of(cartItem));
 
-        CartResponse actual = promotionService.handleUsePromoSpecific("username", req);
+        CartResponse actual = promotionService.handleUsePromo("username", req);
 
         assertEquals("username", actual.userName());
         assertEquals(BigDecimal.ZERO, actual.discount());
@@ -146,6 +149,52 @@ class PromotionServiceTest {
         assertEquals(BigDecimal.valueOf(90), actual.finalTotal());
         verify(cartItemRepository, times(1)).save(cartItem);
         verify(cartRepository, times(1)).save(cart);
+    }
+
+    @Test
+    @DisplayName(
+            "should return cart response after use promotion code general success case FIXED_AMOUNT")
+    void testHandleUsePromoGeneral_Success_caseFixedAmount() {
+        promotion.setApplicableTo("ENTIRE_CART");
+        promotion.setMaxDiscountAmount(BigDecimal.valueOf(5));
+        req = new RequestBodyCode("PROMO1", Optional.empty());
+
+        when(promotionRepository.findByCode("PROMO1")).thenReturn(Optional.of(promotion));
+        when(cartRepository.findByShopper_name("username")).thenReturn(Optional.of(cart));
+
+        CartResponse actual = promotionService.handleUsePromo("username", req);
+
+        assertEquals("username", actual.userName());
+        assertEquals("PROMO1", actual.promotionCode());
+        assertEquals(BigDecimal.valueOf(5), actual.discount());
+        assertEquals(BigDecimal.valueOf(5), actual.totalDiscount());
+        assertEquals(BigDecimal.valueOf(100), actual.total());
+        assertEquals(BigDecimal.valueOf(95), actual.finalTotal());
+    }
+
+    @Test
+    @DisplayName(
+            "should return cart response after use promotion code general success case PERCENTAGE")
+    void testHandleUsePromoGeneral_Success_casePercentage() {
+        promotion.setApplicableTo("ENTIRE_CART");
+        promotion.setDiscountType("PERCENTAGE");
+        promotion.setDiscountAmount(BigDecimal.valueOf(50));
+        promotion.setMaxDiscountAmount(BigDecimal.valueOf(20));
+        req = new RequestBodyCode("PROMO1", Optional.empty());
+
+        when(promotionRepository.findByCode("PROMO1")).thenReturn(Optional.of(promotion));
+        when(cartRepository.findByShopper_name("username")).thenReturn(Optional.of(cart));
+        when(bigDecimalPercentages.percentOf(BigDecimal.valueOf(50), BigDecimal.valueOf(100)))
+                .thenReturn(BigDecimal.valueOf(50));
+
+        CartResponse actual = promotionService.handleUsePromo("username", req);
+
+        assertEquals("username", actual.userName());
+        assertEquals("PROMO1", actual.promotionCode());
+        assertEquals(BigDecimal.valueOf(20), actual.discount());
+        assertEquals(BigDecimal.valueOf(20), actual.totalDiscount());
+        assertEquals(BigDecimal.valueOf(100), actual.total());
+        assertEquals(BigDecimal.valueOf(80), actual.finalTotal());
     }
 
     @Test
