@@ -148,7 +148,6 @@ class PromotionServiceTest {
         assertEquals(BigDecimal.TEN, actual.totalDiscount());
         assertEquals(BigDecimal.valueOf(90), actual.finalTotal());
         verify(cartItemRepository, times(1)).save(cartItem);
-        verify(cartRepository, times(1)).save(cart);
     }
 
     @Test

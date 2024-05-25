@@ -59,7 +59,8 @@ public class Cart {
                                         item.getQuantity(),
                                         item.getSubTotal(),
                                         item.getDiscount(),
-                                        item.getPromotionCode()))
+                                        item.getPromotionCode(),
+                                        item.getFreeProduct()))
                 .collect(Collectors.toList());
     }
 

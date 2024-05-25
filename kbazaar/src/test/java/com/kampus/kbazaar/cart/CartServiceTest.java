@@ -271,7 +271,8 @@ class CartServiceTest {
                                 cartItem.getQuantity(),
                                 cartItem.getSubTotal(),
                                 cartItem.getDiscount(),
-                                cartItem.getPromotionCode())),
+                                cartItem.getPromotionCode(),
+                                cartItem.getFreeProduct())),
                 cartResponse.products());
         assertEquals("", cartResponse.promotionCode());
         assertEquals(BigDecimal.ZERO, cartResponse.discount());

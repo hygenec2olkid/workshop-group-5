@@ -8,4 +8,5 @@ public record CartItemResponse(
         Integer quantity,
         BigDecimal subTotal,
         BigDecimal discount,
-        String promotionCode) {}
+        String promotionCode,
+        Integer freeProduct) {}

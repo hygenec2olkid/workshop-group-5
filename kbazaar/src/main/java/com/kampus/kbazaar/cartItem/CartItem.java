@@ -41,4 +41,7 @@ public class CartItem {
 
     @NotNull @Column(name = "promotion_code", nullable = false)
     private String promotionCode;
+
+    @NotNull @Column(name = "free_product", nullable = false)
+    private Integer freeProduct = 0;
 }
