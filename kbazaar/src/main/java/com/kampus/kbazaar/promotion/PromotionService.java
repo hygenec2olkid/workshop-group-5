@@ -61,19 +61,6 @@ public class PromotionService {
         }
     }
 
-    public CartResponse handleUsePromoGeneral(String username, RequestBodyCode req) {
-        Promotion promotion = getPromotion(req.code());
-
-        Cart cart = findCart(username);
-
-        if (validateTimeAvailable(promotion)) {
-            if ("ENTIRE_CART".equals(promotion.getApplicableTo())) {
-                handleAppliedToEntireCart(promotion, cart, req);
-            }
-        }
-        return cart.toResponse();
-    }
-
     public CartResponse handleUsePromoSpecific(String username, RequestBodyCode req) {
         Promotion promotion = getPromotion(req.code());
 
@@ -81,10 +68,23 @@ public class PromotionService {
 
         if (checkCodeAvailable(req)) {
             if (validateTimeAvailable(promotion)) {
-                handleAppliedToCartItemSpecific(promotion, cartItem, req);
+                handleAppliedToCartItemSpecific(promotion, cartItem);
             }
         }
         return cartItem.getCart().toResponse();
+    }
+
+    public CartResponse handleUsePromoGeneral(String username, RequestBodyCode req) {
+        Promotion promotion = getPromotion(req.code());
+
+        Cart cart = findCart(username);
+
+        if (validateTimeAvailable(promotion)) {
+            if ("ENTIRE_CART".equals(promotion.getApplicableTo())) {
+                handleAppliedToEntireCart(promotion, cart);
+            }
+        }
+        return cart.toResponse();
     }
 
     private Promotion getPromotion(String code) {
@@ -131,10 +131,9 @@ public class PromotionService {
         return promo.getMinQuantity() != null && promo.getFreeQuantity() != null;
     }
 
-    public void handleAppliedToCartItemSpecific(
-            Promotion promo, CartItem cartItem, RequestBodyCode req) {
+    public void handleAppliedToCartItemSpecific(Promotion promo, CartItem cartItem) {
         if (isGetFreeProduct(promo)) {
-            updateGetFreeProduct(promo, cartItem, req);
+            updateGetFreeProduct(promo, cartItem);
         } else {
             BigDecimal discount = calDiscount(promo, cartItem.getSubTotal());
             updateCartItem(discount, cartItem, promo);
@@ -142,22 +141,29 @@ public class PromotionService {
         }
     }
 
-    public void handleAppliedToEntireCart(Promotion promo, Cart cart, RequestBodyCode req) {
+    public void handleAppliedToEntireCart(Promotion promo, Cart cart) {
+        BigDecimal discount = BigDecimal.ZERO;
+        List<CartItem> cartItemList = this.cartItemRepository.findByCartId(cart.getId());
         if (isGetFreeProduct(promo)) {
-            List<CartItem> cartItemList = this.cartItemRepository.findByCartId(cart.getId());
             for (CartItem product : cartItemList) {
-                updateGetFreeProduct(promo, product, req);
+                updateGetFreeProduct(promo, product);
             }
+
         } else {
-            BigDecimal discount = calDiscount(promo, cart.getTotal());
-            updateCartTotal(cart, discount);
+            discount = calDiscount(promo, cart.getTotal());
+            for (CartItem product : cartItemList) {
+                product.setPromotionCode("");
+                product.setFreeProduct(0);
+                this.cartItemRepository.save(product);
+            }
         }
+        updateCartTotal(cart, discount);
         cart.setPromotion(promo);
         cart.setPromotionCode(promo.getCode());
         this.cartRepository.save(cart);
     }
 
-    public void updateGetFreeProduct(Promotion promo, CartItem cartItem, RequestBodyCode req) {
+    public void updateGetFreeProduct(Promotion promo, CartItem cartItem) {
         Integer min = promo.getMinQuantity();
         Integer free = promo.getFreeQuantity();
         if ("ENTIRE_CART".equals(promo.getApplicableTo())) {
@@ -165,10 +171,8 @@ public class PromotionService {
             cartItem.setFreeProduct(free);
         }
         if ("SPECIFIC_PRODUCTS".equals(promo.getApplicableTo())) {
-            if (checkCodeAvailable(req)) {
-                if (cartItem.getQuantity() >= min) {
-                    cartItem.setFreeProduct(free);
-                }
+            if (cartItem.getQuantity() >= min) {
+                cartItem.setFreeProduct(free);
             }
         }
         cartItem.setPromotionCode(promo.getCode());
@@ -205,6 +209,7 @@ public class PromotionService {
         cart.setDiscount(discount);
         cart.setTotalDiscount(cart.getDiscount().add(subDiscount));
         cart.setFinalTotal(cart.getTotal().subtract(cart.getTotalDiscount()));
+        this.cartRepository.save(cart);
     }
 
     public void updateCartItem(BigDecimal discount, CartItem cartItem, Promotion promo) {

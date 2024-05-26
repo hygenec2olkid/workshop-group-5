@@ -61,6 +61,7 @@ class PromotionServiceTest {
         cart.setId(1L);
         cart.setShopper(shopper);
         cart.setTotal(BigDecimal.valueOf(100));
+        cart.setFinalTotal(BigDecimal.valueOf(100));
         cart.setDiscount(BigDecimal.ZERO);
 
         product = new Product();
@@ -148,6 +149,7 @@ class PromotionServiceTest {
         assertEquals(BigDecimal.TEN, actual.totalDiscount());
         assertEquals(BigDecimal.valueOf(90), actual.finalTotal());
         verify(cartItemRepository, times(1)).save(cartItem);
+        verify(cartRepository, times(1)).save(cart);
     }
 
     @Test
@@ -160,6 +162,7 @@ class PromotionServiceTest {
 
         when(promotionRepository.findByCode("PROMO1")).thenReturn(Optional.of(promotion));
         when(cartRepository.findByShopper_name("username")).thenReturn(Optional.of(cart));
+        when(cartItemRepository.findByCartId(1L)).thenReturn(List.of(cartItem));
 
         CartResponse actual = promotionService.handleUsePromo("username", req);
 
@@ -169,6 +172,8 @@ class PromotionServiceTest {
         assertEquals(BigDecimal.valueOf(5), actual.totalDiscount());
         assertEquals(BigDecimal.valueOf(100), actual.total());
         assertEquals(BigDecimal.valueOf(95), actual.finalTotal());
+        verify(cartRepository, times(2)).save(cart);
+        verify(cartItemRepository, times(1)).save(any());
     }
 
     @Test
@@ -302,5 +307,54 @@ class PromotionServiceTest {
 
         String expected = "test not have this product in cart";
         assertEquals(expected, actual.getMessage());
+    }
+
+    @Test
+    @DisplayName("test apply promotion code type get free product case specific")
+    void testApplyPromotionCodeTypeGetFreeProductSpecific() {
+        promotion.setCode("BUY2GET1FREE");
+        promotion.setMinQuantity(2);
+        promotion.setFreeQuantity(1);
+        promotion.setApplicableTo("SPECIFIC_PRODUCTS");
+        cartItem.setQuantity(2);
+
+        req = new RequestBodyCode("BUY2GET1FREE", Optional.of("PRODUCT-SKUS1"));
+
+        when(promotionRepository.findByCode("BUY2GET1FREE")).thenReturn(Optional.of(promotion));
+        when(cartRepository.findByShopper_name("username")).thenReturn(Optional.of(cart));
+        when(productRepository.findBySku("PRODUCT-SKUS1")).thenReturn(Optional.of(product));
+        when(cartItemRepository.findByCartIdAndProductId(1L, 1L)).thenReturn(Optional.of(cartItem));
+        when(promotionRepository.findProductSkuByCode("BUY2GET1FREE"))
+                .thenReturn(Optional.of("PRODUCT-SKUS1"));
+
+        CartResponse actual = promotionService.handleUsePromo("username", req);
+
+        verify(cartItemRepository, times(1)).save(cartItem);
+        assertEquals("BUY2GET1FREE", actual.products().get(0).promotionCode());
+        assertEquals(1, actual.products().get(0).freeProduct());
+    }
+
+    @Test
+    @DisplayName("test apply promotion code type get free product case entire cart")
+    void testApplyPromotionCodeTypeGetFreeProductEntireCart() {
+        promotion.setCode("BUY1GET1FREE");
+        promotion.setMinQuantity(1);
+        promotion.setFreeQuantity(1);
+        promotion.setApplicableTo("ENTIRE_CART");
+
+        req = new RequestBodyCode("BUY1GET1FREE", Optional.empty());
+
+        when(promotionRepository.findByCode("BUY1GET1FREE")).thenReturn(Optional.of(promotion));
+        when(cartRepository.findByShopper_name("username")).thenReturn(Optional.of(cart));
+        when(cartItemRepository.findByCartId(1L)).thenReturn(List.of(cartItem));
+
+        CartResponse actual = promotionService.handleUsePromo("username", req);
+
+        verify(cartItemRepository, times(1)).save(any());
+        verify(cartRepository, times(2)).save(any());
+        assertEquals("BUY1GET1FREE", actual.promotionCode());
+        assertEquals("BUY1GET1FREE", actual.products().get(0).promotionCode());
+        assertEquals(1, actual.products().get(0).freeProduct());
+        assertEquals(BigDecimal.ZERO, actual.products().get(0).discount());
     }
 }
