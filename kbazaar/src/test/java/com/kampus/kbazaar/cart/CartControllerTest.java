@@ -1,8 +1,7 @@
 package com.kampus.kbazaar.cart;
 
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -128,6 +127,18 @@ public class CartControllerTest {
                         post("/api/v1/carts/" + username + "/promotions")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(requestBody))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("should return status 200 after delete cartItem")
+    public void shouldReturn200AfterDeleteCartItem() throws Exception {
+        String username = "DataGuru";
+        String productSku = "MOBILE-APPLE-IPHONE-12-PRO";
+
+        mockMvc.perform(
+                        delete("/api/v1/carts/" + username + "/items/" + productSku)
+                                .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
     }
 }
