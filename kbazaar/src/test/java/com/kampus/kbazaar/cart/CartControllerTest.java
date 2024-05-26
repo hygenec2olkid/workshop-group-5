@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kampus.kbazaar.cart.bodyReq.ProductDetailBody;
+import com.kampus.kbazaar.cartItem.CartItemService;
 import com.kampus.kbazaar.promotion.PromotionService;
 import com.kampus.kbazaar.security.JwtAuthFilter;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,6 +40,8 @@ public class CartControllerTest {
     @MockBean private CartService cartService;
 
     @MockBean private PromotionService promotionService;
+
+    @MockBean private CartItemService cartItemService;
 
     @BeforeEach
     public void setup() {
