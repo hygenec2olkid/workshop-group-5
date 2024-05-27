@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS cart (
     	total_discount DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
     	final_total DECIMAL(10, 2) NOT NULL,
     	promotion_code VARCHAR(255) NOT NULL DEFAULT '',
+    	fee INT NOT NULL DEFAULT 0,
     	CONSTRAINT cart_promotion_fk FOREIGN KEY (discount_id) REFERENCES promotion(promotion_id),
     	CONSTRAINT cart_shopper_fk FOREIGN KEY (user_id) REFERENCES shopper(id)
 );

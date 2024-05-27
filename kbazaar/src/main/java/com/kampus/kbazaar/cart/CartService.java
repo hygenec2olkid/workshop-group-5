@@ -11,6 +11,7 @@ import com.kampus.kbazaar.shopper.ShopperRepository;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -19,6 +20,9 @@ public class CartService {
     private final ProductRepository productRepository;
     private final ShopperRepository shopperRepository;
     private final CartItemRepository cartItemRepository;
+
+    @Value("${enabled.feature.promotion.list.api}")
+    private boolean featureToggle;
 
     public CartService(
             CartRepository cartRepository,
@@ -29,6 +33,10 @@ public class CartService {
         this.productRepository = productRepository;
         this.shopperRepository = shopperRepository;
         this.cartItemRepository = cartItemRepository;
+    }
+
+    public boolean getFeatureToggle() {
+        return this.featureToggle;
     }
 
     public CartResponse addProductToCart(String userName, ProductDetailBody productDetailBody) {
@@ -66,6 +74,10 @@ public class CartService {
             cartItem.setDiscount(BigDecimal.ZERO);
             cartItem.setPromotionCode("");
             cart.setCartItemList(List.of(cartItem));
+
+            if (getFeatureToggle()) {
+                cart.setFee(25);
+            }
 
             this.cartRepository.save(cart);
             this.cartItemRepository.save(cartItem);

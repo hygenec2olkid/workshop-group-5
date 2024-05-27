@@ -22,18 +22,21 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.util.ReflectionTestUtils;
 
+@TestPropertySource(properties = "enabled.feature.promotion.list.api=true")
 class CartServiceTest {
     @Mock private CartRepository cartRepository;
     @Mock private ProductRepository productRepository;
     @Mock private ShopperRepository shopperRepository;
     @Mock private CartItemRepository cartItemRepository;
-
     @InjectMocks private CartService cartService;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+        ReflectionTestUtils.setField(cartService, "featureToggle", true);
     }
 
     @Test
@@ -60,6 +63,7 @@ class CartServiceTest {
         assertEquals(BigDecimal.ZERO, actual.discount());
         assertEquals(BigDecimal.ZERO, actual.totalDiscount());
         assertEquals("", actual.promotionCode());
+        assertEquals(25, actual.fee());
     }
 
     @Test

@@ -49,6 +49,9 @@ public class Cart {
     @NotNull @Column(name = "promotion_code", nullable = false)
     private String promotionCode = "";
 
+    @NotNull @Column(name = "fee", nullable = false)
+    private Integer fee = 0;
+
     private List<CartItemResponse> getCartItemList() {
         return cartItemList.stream()
                 .map(
@@ -72,6 +75,7 @@ public class Cart {
                 this.discount,
                 this.totalDiscount,
                 this.total,
-                this.finalTotal);
+                this.finalTotal,
+                this.fee);
     }
 }

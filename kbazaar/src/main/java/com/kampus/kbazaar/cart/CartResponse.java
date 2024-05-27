@@ -11,4 +11,5 @@ public record CartResponse(
         BigDecimal discount,
         BigDecimal totalDiscount,
         BigDecimal total,
-        BigDecimal finalTotal) {}
+        BigDecimal finalTotal,
+        Integer fee) {}
