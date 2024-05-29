@@ -3,14 +3,17 @@ package com.kampus.kbazaar.promotion;
 import com.kampus.kbazaar.cart.Cart;
 import com.kampus.kbazaar.cart.CartRepository;
 import com.kampus.kbazaar.cart.CartResponse;
+import com.kampus.kbazaar.cart.CartService;
 import com.kampus.kbazaar.cart.bodyReq.RequestBodyCode;
 import com.kampus.kbazaar.cartItem.CartItem;
 import com.kampus.kbazaar.cartItem.CartItemRepository;
+import com.kampus.kbazaar.cartItem.CartItemService;
 import com.kampus.kbazaar.exceptions.NotFoundException;
 import com.kampus.kbazaar.exceptions.PromoCodeExpiredException;
 import com.kampus.kbazaar.exceptions.PromoCodeNotApplicableException;
 import com.kampus.kbazaar.product.Product;
 import com.kampus.kbazaar.product.ProductRepository;
+import com.kampus.kbazaar.product.ProductService;
 import com.kampus.kbazaar.util.BigDecimalPercentages;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -20,26 +23,31 @@ import org.springframework.stereotype.Service;
 @Service
 public class PromotionService {
     private final PromotionRepository promotionRepository;
-
     private final CartRepository cartRepository;
-
     private final CartItemRepository cartItemRepository;
-
     private final ProductRepository productRepository;
-
+    private final CartService cartService;
     private final BigDecimalPercentages bigDecimalPercentages;
+    private final CartItemService cartItemService;
+    private final ProductService productService;
 
     public PromotionService(
+            ProductService productService,
             PromotionRepository promotionRepository,
             CartRepository cartRepository,
             CartItemRepository cartItemRepository,
             ProductRepository productRepository,
-            BigDecimalPercentages bigDecimalPercentages) {
+            CartService cartService,
+            BigDecimalPercentages bigDecimalPercentages,
+            CartItemService cartItemService) {
         this.promotionRepository = promotionRepository;
         this.cartRepository = cartRepository;
         this.cartItemRepository = cartItemRepository;
         this.productRepository = productRepository;
+        this.cartService = cartService;
         this.bigDecimalPercentages = bigDecimalPercentages;
+        this.cartItemService = cartItemService;
+        this.productService = productService;
     }
 
     public List<PromotionResponse> getAll() {
@@ -64,7 +72,12 @@ public class PromotionService {
     public CartResponse handleUsePromoSpecific(String username, RequestBodyCode req) {
         Promotion promotion = getPromotion(req.code());
 
-        CartItem cartItem = findCartItem(username, req);
+        Cart cart = this.cartService.findCart(username);
+
+        Product product = this.productService.getProductBySku(req.productSkus().get());
+
+        CartItem cartItem =
+                this.cartItemService.findByCartIdAndProductId(cart.getId(), product.getId());
 
         if (checkCodeAvailable(req)) {
             if (validateTimeAvailable(promotion)) {
@@ -77,7 +90,7 @@ public class PromotionService {
     public CartResponse handleUsePromoGeneral(String username, RequestBodyCode req) {
         Promotion promotion = getPromotion(req.code());
 
-        Cart cart = findCart(username);
+        Cart cart = this.cartService.findCart(username);
 
         if (validateTimeAvailable(promotion)) {
             if ("ENTIRE_CART".equals(promotion.getApplicableTo())) {
@@ -87,13 +100,13 @@ public class PromotionService {
         return cart.toResponse();
     }
 
-    private Promotion getPromotion(String code) {
+    public Promotion getPromotion(String code) {
         return this.promotionRepository
                 .findByCode(code)
                 .orElseThrow(
                         () ->
                                 new NotFoundException(
-                                        String.format("not found promoCode: %s", code)));
+                                        String.format("Not found promoCode: %s", code)));
     }
 
     public boolean checkCodeAvailable(RequestBodyCode req) {
@@ -124,7 +137,7 @@ public class PromotionService {
         boolean isAvailable = localDate.isAfter(startDate) && localDate.isBefore(endDate);
         if (isAvailable) return true;
 
-        throw new PromoCodeExpiredException("promotion code is expire");
+        throw new PromoCodeExpiredException("Promotion code is expire");
     }
 
     private boolean isGetFreeProduct(Promotion promo) {
@@ -143,7 +156,7 @@ public class PromotionService {
 
     public void handleAppliedToEntireCart(Promotion promo, Cart cart) {
         BigDecimal discount = BigDecimal.ZERO;
-        List<CartItem> cartItemList = this.cartItemRepository.findByCartId(cart.getId());
+        List<CartItem> cartItemList = this.cartItemService.findCartItemByCardId(cart.getId());
         if (isGetFreeProduct(promo)) {
             for (CartItem product : cartItemList) {
                 updateGetFreeProduct(promo, product);
@@ -194,12 +207,11 @@ public class PromotionService {
                 discount = maxDiscount;
             }
         }
-
         return discount;
     }
 
     public void updateCartTotal(Cart cart, BigDecimal discount) {
-        List<CartItem> cartItemList = this.cartItemRepository.findByCartId(cart.getId());
+        List<CartItem> cartItemList = this.cartItemService.findCartItemByCardId(cart.getId());
 
         BigDecimal subDiscount =
                 cartItemList.stream()
@@ -217,40 +229,5 @@ public class PromotionService {
         cartItem.setDiscount(discount);
         cartItem.setPromotionCode(promo.getCode());
         this.cartItemRepository.save(cartItem);
-    }
-
-    public CartItem findCartItem(String username, RequestBodyCode req) {
-        Cart cart =
-                this.cartRepository
-                        .findByShopper_name(username)
-                        .orElseThrow(
-                                () ->
-                                        new NotFoundException(
-                                                String.format(
-                                                        "user: %s not have cart yet", username)));
-
-        Product product =
-                this.productRepository
-                        .findBySku(req.productSkus().get())
-                        .orElseThrow(
-                                () ->
-                                        new NotFoundException(
-                                                String.format(
-                                                        "not found productSku: %s",
-                                                        req.productSkus().get())));
-
-        return this.cartItemRepository
-                .findByCartIdAndProductId(cart.getId(), product.getId())
-                .orElseThrow(
-                        () ->
-                                new NotFoundException(
-                                        String.format(
-                                                "%s not have this product in cart", username)));
-    }
-
-    private Cart findCart(String username) {
-        return this.cartRepository
-                .findByShopper_name(username)
-                .orElseThrow(() -> new NotFoundException("not found"));
     }
 }

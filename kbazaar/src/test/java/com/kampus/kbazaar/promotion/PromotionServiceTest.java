@@ -6,14 +6,17 @@ import static org.mockito.Mockito.*;
 import com.kampus.kbazaar.cart.Cart;
 import com.kampus.kbazaar.cart.CartRepository;
 import com.kampus.kbazaar.cart.CartResponse;
+import com.kampus.kbazaar.cart.CartService;
 import com.kampus.kbazaar.cart.bodyReq.RequestBodyCode;
 import com.kampus.kbazaar.cartItem.CartItem;
 import com.kampus.kbazaar.cartItem.CartItemRepository;
+import com.kampus.kbazaar.cartItem.CartItemService;
 import com.kampus.kbazaar.exceptions.NotFoundException;
 import com.kampus.kbazaar.exceptions.PromoCodeExpiredException;
 import com.kampus.kbazaar.exceptions.PromoCodeNotApplicableException;
 import com.kampus.kbazaar.product.Product;
 import com.kampus.kbazaar.product.ProductRepository;
+import com.kampus.kbazaar.product.ProductService;
 import com.kampus.kbazaar.shopper.Shopper;
 import com.kampus.kbazaar.util.BigDecimalPercentages;
 import java.math.BigDecimal;
@@ -34,7 +37,9 @@ class PromotionServiceTest {
     @Mock private CartRepository cartRepository;
     @Mock private CartItemRepository cartItemRepository;
     @Mock private ProductRepository productRepository;
-
+    @Mock private CartService cartService;
+    @Mock private CartItemService cartItemService;
+    @Mock private ProductService productService;
     @Mock private BigDecimalPercentages bigDecimalPercentages;
     @InjectMocks private PromotionService promotionService;
     private Promotion promotion;
@@ -135,10 +140,10 @@ class PromotionServiceTest {
         when(promotionRepository.findByCode(req.code())).thenReturn(Optional.of(promotion));
         when(promotionRepository.findProductSkuByCode(req.code()))
                 .thenReturn(Optional.of(product_skus));
-        when(cartRepository.findByShopper_name("username")).thenReturn(Optional.of(cart));
-        when(productRepository.findBySku(req.productSkus().get())).thenReturn(Optional.of(product));
-        when(cartItemRepository.findByCartIdAndProductId(1L, 1L)).thenReturn(Optional.of(cartItem));
-        when(cartItemRepository.findByCartId(1L)).thenReturn(List.of(cartItem));
+        when(cartService.findCart("username")).thenReturn(cart);
+        when(productService.getProductBySku(req.productSkus().get())).thenReturn(product);
+        when(cartItemService.findByCartIdAndProductId(1L, 1L)).thenReturn(cartItem);
+        when(cartItemService.findCartItemByCardId(1L)).thenReturn(List.of(cartItem));
 
         CartResponse actual = promotionService.handleUsePromo("username", req);
 
@@ -161,8 +166,8 @@ class PromotionServiceTest {
         req = new RequestBodyCode("PROMO1", Optional.empty());
 
         when(promotionRepository.findByCode("PROMO1")).thenReturn(Optional.of(promotion));
-        when(cartRepository.findByShopper_name("username")).thenReturn(Optional.of(cart));
-        when(cartItemRepository.findByCartId(1L)).thenReturn(List.of(cartItem));
+        when(cartService.findCart("username")).thenReturn(cart);
+        when(cartItemService.findCartItemByCardId(1L)).thenReturn(List.of(cartItem));
 
         CartResponse actual = promotionService.handleUsePromo("username", req);
 
@@ -187,7 +192,7 @@ class PromotionServiceTest {
         req = new RequestBodyCode("PROMO1", Optional.empty());
 
         when(promotionRepository.findByCode("PROMO1")).thenReturn(Optional.of(promotion));
-        when(cartRepository.findByShopper_name("username")).thenReturn(Optional.of(cart));
+        when(cartService.findCart("username")).thenReturn(cart);
         when(bigDecimalPercentages.percentOf(BigDecimal.valueOf(50), BigDecimal.valueOf(100)))
                 .thenReturn(BigDecimal.valueOf(50));
 
@@ -211,7 +216,7 @@ class PromotionServiceTest {
                         NotFoundException.class,
                         () -> promotionService.handleUsePromoSpecific("test", req));
 
-        String expected = String.format("not found promoCode: %s", "PROMO1");
+        String expected = String.format("Not found promoCode: %s", "PROMO1");
         assertEquals(expected, actual.getMessage());
     }
 
@@ -219,9 +224,9 @@ class PromotionServiceTest {
     void testThrowPromotionNotApplied() {
         req = new RequestBodyCode("PROMO3", Optional.of("PRODUCT-SKUS3"));
         when(promotionRepository.findByCode(req.code())).thenReturn(Optional.of(promotion));
-        when(cartRepository.findByShopper_name("test")).thenReturn(Optional.of(cart));
-        when(productRepository.findBySku(req.productSkus().get())).thenReturn(Optional.of(product));
-        when(cartItemRepository.findByCartIdAndProductId(1L, 1L)).thenReturn(Optional.of(cartItem));
+        when(cartService.findCart("test")).thenReturn(cart);
+        when(productService.getProductBySku(req.productSkus().get())).thenReturn(product);
+        when(cartItemService.findByCartIdAndProductId(1L, 1L)).thenReturn(cartItem);
         when(promotionRepository.findProductSkuByCode(req.code()))
                 .thenReturn(Optional.of(product_skus));
 
@@ -240,9 +245,9 @@ class PromotionServiceTest {
         promotion.setStartDate(LocalDateTime.now().minusDays(2));
         promotion.setEndDate(LocalDateTime.now().minusDays(1));
 
-        when(cartRepository.findByShopper_name("test")).thenReturn(Optional.of(cart));
-        when(productRepository.findBySku(req.productSkus().get())).thenReturn(Optional.of(product));
-        when(cartItemRepository.findByCartIdAndProductId(1L, 1L)).thenReturn(Optional.of(cartItem));
+        when(cartService.findCart("test")).thenReturn(cart);
+        when(productService.getProductBySku(req.productSkus().get())).thenReturn(product);
+        when(cartItemService.findByCartIdAndProductId(1L, 1L)).thenReturn(cartItem);
         when(promotionRepository.findByCode(req.code())).thenReturn(Optional.of(promotion));
         when(promotionRepository.findProductSkuByCode(req.code()))
                 .thenReturn(Optional.of(product_skus));
@@ -252,7 +257,7 @@ class PromotionServiceTest {
                         PromoCodeExpiredException.class,
                         () -> promotionService.handleUsePromoSpecific("test", req));
 
-        String expected = "promotion code is expire";
+        String expected = "Promotion code is expire";
         assertEquals(expected, actual.getMessage());
     }
 
@@ -269,47 +274,6 @@ class PromotionServiceTest {
     }
 
     @Test
-    void testThrowNotFoundException_findCartItem_cart() {
-        when(cartRepository.findByShopper_name("test")).thenReturn(Optional.empty());
-
-        Exception actual =
-                assertThrows(
-                        NotFoundException.class, () -> promotionService.findCartItem("test", req));
-
-        String expected = "user: test not have cart yet";
-        assertEquals(expected, actual.getMessage());
-    }
-
-    @Test
-    void testThrowNotFoundException_findCartItem_product() {
-        when(cartRepository.findByShopper_name("test")).thenReturn(Optional.of(cart));
-        when(productRepository.findBySku(req.productSkus().get())).thenReturn(Optional.empty());
-
-        Exception actual =
-                assertThrows(
-                        NotFoundException.class, () -> promotionService.findCartItem("test", req));
-
-        String expected = String.format("not found productSku: %s", req.productSkus().get());
-        assertEquals(expected, actual.getMessage());
-    }
-
-    @Test
-    void testThrowNotFoundException_findCartItem_cartItem() {
-        when(promotionRepository.findByCode("PROMO1")).thenReturn(Optional.of(promotion));
-        when(cartRepository.findByShopper_name("test")).thenReturn(Optional.of(cart));
-        when(productRepository.findBySku("PRODUCT-SKUS1")).thenReturn(Optional.of(product));
-        when(cartItemRepository.findByCartIdAndProductId(1L, 1L)).thenReturn(Optional.empty());
-
-        Exception actual =
-                assertThrows(
-                        NotFoundException.class,
-                        () -> promotionService.handleUsePromoSpecific("test", req));
-
-        String expected = "test not have this product in cart";
-        assertEquals(expected, actual.getMessage());
-    }
-
-    @Test
     @DisplayName("test apply promotion code type get free product case specific")
     void testApplyPromotionCodeTypeGetFreeProductSpecific() {
         promotion.setCode("BUY2GET1FREE");
@@ -321,9 +285,9 @@ class PromotionServiceTest {
         req = new RequestBodyCode("BUY2GET1FREE", Optional.of("PRODUCT-SKUS1"));
 
         when(promotionRepository.findByCode("BUY2GET1FREE")).thenReturn(Optional.of(promotion));
-        when(cartRepository.findByShopper_name("username")).thenReturn(Optional.of(cart));
-        when(productRepository.findBySku("PRODUCT-SKUS1")).thenReturn(Optional.of(product));
-        when(cartItemRepository.findByCartIdAndProductId(1L, 1L)).thenReturn(Optional.of(cartItem));
+        when(cartService.findCart("username")).thenReturn(cart);
+        when(productService.getProductBySku("PRODUCT-SKUS1")).thenReturn(product);
+        when(cartItemService.findByCartIdAndProductId(1L, 1L)).thenReturn(cartItem);
         when(promotionRepository.findProductSkuByCode("BUY2GET1FREE"))
                 .thenReturn(Optional.of("PRODUCT-SKUS1"));
 
@@ -345,8 +309,8 @@ class PromotionServiceTest {
         req = new RequestBodyCode("BUY1GET1FREE", Optional.empty());
 
         when(promotionRepository.findByCode("BUY1GET1FREE")).thenReturn(Optional.of(promotion));
-        when(cartRepository.findByShopper_name("username")).thenReturn(Optional.of(cart));
-        when(cartItemRepository.findByCartId(1L)).thenReturn(List.of(cartItem));
+        when(cartService.findCart("username")).thenReturn(cart);
+        when(cartItemService.findCartItemByCardId(1L)).thenReturn(List.of(cartItem));
 
         CartResponse actual = promotionService.handleUsePromo("username", req);
 

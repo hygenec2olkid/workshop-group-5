@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class ShopperService {
 
-    private ShopperRepository shopperRepository;
+    private final ShopperRepository shopperRepository;
 
     public ShopperService(ShopperRepository shopperRepository) {
         this.shopperRepository = shopperRepository;
@@ -28,6 +28,12 @@ public class ShopperService {
         return shopperRepository
                 .findByUsername(username)
                 .map(Shopper::toResponse)
+                .orElseThrow(() -> new NotFoundException("Shopper not found"));
+    }
+
+    public Shopper getByUsernames(String username) {
+        return shopperRepository
+                .findByUsername(username)
                 .orElseThrow(() -> new NotFoundException("Shopper not found"));
     }
 }

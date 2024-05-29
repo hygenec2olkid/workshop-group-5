@@ -4,13 +4,14 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
 import com.kampus.kbazaar.cart.Cart;
-import com.kampus.kbazaar.cart.CartRepository;
 import com.kampus.kbazaar.cart.CartService;
 import com.kampus.kbazaar.exceptions.NotFoundException;
 import com.kampus.kbazaar.product.Product;
-import com.kampus.kbazaar.product.ProductRepository;
+import com.kampus.kbazaar.product.ProductService;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -18,8 +19,7 @@ import org.mockito.MockitoAnnotations;
 
 public class CartItemServiceTest {
     @Mock private CartItemRepository cartItemRepository;
-    @Mock private CartRepository cartRepository;
-    @Mock private ProductRepository productRepository;
+    @Mock private ProductService productService;
     @Mock private CartService cartService;
     @InjectMocks private CartItemService cartItemService;
 
@@ -45,8 +45,8 @@ public class CartItemServiceTest {
 
         cartItem1.setProduct(product);
 
-        when(cartRepository.findByShopper_name(username)).thenReturn(Optional.of(cart));
-        when(productRepository.findBySku(productSku)).thenReturn(Optional.of(product));
+        when(cartService.findCart(username)).thenReturn(cart);
+        when(productService.getProductBySku(productSku)).thenReturn(product);
         when(cartItemRepository.findByCartIdAndProductId(1L, 1L))
                 .thenReturn(Optional.of(cartItem1));
 
@@ -56,25 +56,56 @@ public class CartItemServiceTest {
     }
 
     @Test
-    void shouldThrowExceptionNotFound() {
-        String username = "TEST";
-        String productSku = "PRODUCT_SKU";
+    @DisplayName("should return List of cart item")
+    void shouldReturnListOfCartItem() {
+        CartItem cartItem = new CartItem();
+        cartItem.setId(1L);
+        List<CartItem> cartItemList = List.of(cartItem);
 
-        Cart cart = new Cart();
-        cart.setId(1L);
+        when(cartItemRepository.findByCart_Id(1L)).thenReturn(Optional.of(cartItemList));
 
-        Product product = new Product();
-        product.setId(1L);
-        product.setSku("PRODUCT_SKU");
-        when(cartRepository.findByShopper_name(username)).thenReturn(Optional.of(cart));
-        when(productRepository.findBySku(productSku)).thenReturn(Optional.of(product));
+        List<CartItem> actual = cartItemService.findCartItemByCardId(1L);
+
+        assertEquals(1L, actual.get(0).getId());
+    }
+
+    @Test
+    @DisplayName("should return cart item")
+    void shouldReturnCartItem() {
+        CartItem cartItem = new CartItem();
+        cartItem.setId(1L);
+
+        when(cartItemRepository.findByCartIdAndProductId(1L, 1L)).thenReturn(Optional.of(cartItem));
+
+        CartItem actual = cartItemService.findByCartIdAndProductId(1L, 1L);
+
+        assertEquals(1L, actual.getId());
+    }
+
+    @Test
+    @DisplayName("should throw not found  cart item")
+    void shouldThrowNotFoundCartItem() {
+
         when(cartItemRepository.findByCartIdAndProductId(1L, 1L)).thenReturn(Optional.empty());
 
         Exception actual =
                 assertThrows(
                         NotFoundException.class,
-                        () -> cartItemService.deleteCartItem(username, productSku));
+                        () -> cartItemService.findByCartIdAndProductId(1L, 1L));
 
-        assertEquals("Product not found in the cart", actual.getMessage());
+        assertEquals("Not found cartItem of this product", actual.getMessage());
+    }
+
+    @Test
+    @DisplayName("should throw not found list of cart item")
+    void shouldThrowNotFoundListOfCartItem() {
+
+        when(cartItemRepository.findByCart_Id(1L)).thenReturn(Optional.empty());
+
+        Exception actual =
+                assertThrows(
+                        NotFoundException.class, () -> cartItemService.findCartItemByCardId(1L));
+
+        assertEquals("Not found list of cartItem", actual.getMessage());
     }
 }

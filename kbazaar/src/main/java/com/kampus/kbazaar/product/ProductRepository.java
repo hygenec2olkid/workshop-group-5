@@ -11,6 +11,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     Optional<Product> findBySku(String sku);
 
-    @Query("SELECT p FROM Product p WHERE p.id = :productSku")
-    Product findByProductId(@Param("productSku") Long productSku);
+    @Query("SELECT p FROM Product p WHERE p.id = :id")
+    Optional<Product> findByProductId(@Param("id") Long id);
 }

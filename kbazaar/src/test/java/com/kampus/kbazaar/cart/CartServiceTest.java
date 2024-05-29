@@ -8,11 +8,14 @@ import com.kampus.kbazaar.cart.bodyReq.ProductDetailBody;
 import com.kampus.kbazaar.cartItem.CartItem;
 import com.kampus.kbazaar.cartItem.CartItemRepository;
 import com.kampus.kbazaar.cartItem.CartItemResponse;
+import com.kampus.kbazaar.cartItem.CartItemService;
 import com.kampus.kbazaar.exceptions.NotFoundException;
 import com.kampus.kbazaar.product.Product;
 import com.kampus.kbazaar.product.ProductRepository;
+import com.kampus.kbazaar.product.ProductService;
 import com.kampus.kbazaar.shopper.Shopper;
 import com.kampus.kbazaar.shopper.ShopperRepository;
+import com.kampus.kbazaar.shopper.ShopperService;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -31,6 +34,9 @@ class CartServiceTest {
     @Mock private ProductRepository productRepository;
     @Mock private ShopperRepository shopperRepository;
     @Mock private CartItemRepository cartItemRepository;
+    @Mock private ProductService productService;
+    @Mock private CartItemService cartItemService;
+    @Mock private ShopperService shopperService;
     @InjectMocks private CartService cartService;
 
     @BeforeEach
@@ -50,8 +56,8 @@ class CartServiceTest {
         product.setId(1L);
         product.setPrice(BigDecimal.TEN);
         ProductDetailBody productDetailBody = new ProductDetailBody(1L, 3);
-        when(shopperRepository.findByUsername(mockUserName)).thenReturn(Optional.of(shopper));
-        when(productRepository.findById(any())).thenReturn(Optional.of(product));
+        when(shopperService.getByUsernames(mockUserName)).thenReturn(shopper);
+        when(productService.getProductById(any())).thenReturn(product);
         when(cartRepository.findByShopper_Id(any())).thenReturn(Optional.empty());
 
         CartResponse actual = cartService.addProductToCart(mockUserName, productDetailBody);
@@ -77,8 +83,8 @@ class CartServiceTest {
         product.setId(10L);
         product.setPrice(BigDecimal.TEN);
         ProductDetailBody productDetailBody = new ProductDetailBody(1L, 3);
-        when(shopperRepository.findByUsername(mockUserName)).thenReturn(Optional.of(shopper));
-        when(productRepository.findById(any())).thenReturn(Optional.of(product));
+        when(shopperService.getByUsernames(mockUserName)).thenReturn(shopper);
+        when(productService.getProductById(any())).thenReturn(product);
         Cart cartShopper = new Cart();
         cartShopper.setId(10L);
         cartShopper.setShopper(shopper);
@@ -102,14 +108,13 @@ class CartServiceTest {
 
         cartShopper.setCartItemList(List.of(cartItem1, cartItem2));
         when(cartRepository.findByShopper_Id(any())).thenReturn(Optional.of(cartShopper));
-        when(cartItemRepository.findByCartIdAndProductId(any(), any()))
-                .thenReturn(Optional.empty());
+        when(cartItemService.findByCartIdAndProductId(any(), any())).thenReturn(null);
         CartItem cartItemAfterSave = new CartItem();
         cartItemAfterSave.setProduct(product);
         cartItemAfterSave.setCart(cartShopper);
         cartItemAfterSave.setQuantity(productDetailBody.quantity());
         cartItemAfterSave.setSubTotal(BigDecimal.valueOf(30));
-        when(cartItemRepository.findByCartId(any()))
+        when(cartItemService.findCartItemByCardId(any()))
                 .thenReturn(List.of(cartItem1, cartItem2, cartItemAfterSave));
 
         CartResponse actual = cartService.addProductToCart(mockUserName, productDetailBody);
@@ -133,8 +138,8 @@ class CartServiceTest {
         product.setId(10L);
         product.setPrice(BigDecimal.TEN);
         ProductDetailBody productDetailBody = new ProductDetailBody(1L, 3);
-        when(shopperRepository.findByUsername(mockUserName)).thenReturn(Optional.of(shopper));
-        when(productRepository.findById(any())).thenReturn(Optional.of(product));
+        when(shopperService.getByUsernames(mockUserName)).thenReturn(shopper);
+        when(productService.getProductById(any())).thenReturn(product);
         Cart cartShopper = new Cart();
         cartShopper.setId(10L);
         cartShopper.setShopper(shopper);
@@ -148,15 +153,14 @@ class CartServiceTest {
         cartShopper.setCartItemList(List.of(cartItemThatFound));
 
         when(cartRepository.findByShopper_Id(any())).thenReturn(Optional.of(cartShopper));
-        when(cartItemRepository.findByCartIdAndProductId(any(), any()))
-                .thenReturn(Optional.of(cartItemThatFound));
+        when(cartItemService.findByCartIdAndProductId(any(), any())).thenReturn(cartItemThatFound);
         CartItem cartItemAfterSave = new CartItem();
         cartItemAfterSave.setProduct(product);
         cartItemAfterSave.setCart(cartShopper);
         cartItemAfterSave.setQuantity(
                 cartItemThatFound.getQuantity() + productDetailBody.quantity());
         cartItemAfterSave.setSubTotal(BigDecimal.TEN);
-        when(cartItemRepository.findByCartId(any())).thenReturn(List.of(cartItemAfterSave));
+        when(cartItemService.findCartItemByCardId(any())).thenReturn(List.of(cartItemAfterSave));
 
         CartResponse actual = cartService.addProductToCart(mockUserName, productDetailBody);
 
@@ -166,43 +170,6 @@ class CartServiceTest {
         assertEquals(BigDecimal.ZERO, actual.discount());
         assertEquals(BigDecimal.ZERO, actual.totalDiscount());
         assertEquals("", actual.promotionCode());
-    }
-
-    @Test
-    @DisplayName("should throw error not found exception when not found shopper")
-    public void shouldThrowNotFoundExceptionIfNotFoundShopper() {
-        String mockUsername = "test";
-        when(shopperRepository.findByUsername(mockUsername)).thenReturn(Optional.empty());
-        ProductDetailBody productDetailBody = new ProductDetailBody(1L, 3);
-        String expected = mockUsername + " is not member of Kbazaar";
-
-        Exception actual =
-                assertThrows(
-                        NotFoundException.class,
-                        () -> cartService.addProductToCart(mockUsername, productDetailBody));
-
-        assertEquals(expected, actual.getMessage());
-    }
-
-    @Test
-    @DisplayName("should throw error not found exception when not found product")
-    public void shouldThrowNotFoundExceptionIfNotFoundProduct() {
-        String mockUsername = "test";
-        ProductDetailBody productDetailBody = new ProductDetailBody(1L, 3);
-        Shopper shopper = new Shopper();
-        shopper.setId(1L);
-
-        when(shopperRepository.findByUsername(mockUsername)).thenReturn(Optional.of(shopper));
-        when(productRepository.findById(productDetailBody.productSku()))
-                .thenReturn(Optional.empty());
-        String expected = productDetailBody.productSku() + " is not have in product";
-
-        Exception actual =
-                assertThrows(
-                        NotFoundException.class,
-                        () -> cartService.addProductToCart(mockUsername, productDetailBody));
-
-        assertEquals(expected, actual.getMessage());
     }
 
     @Test
@@ -218,7 +185,7 @@ class CartServiceTest {
         cartItem2.setProduct(new Product());
         cartItem2.setSubTotal(BigDecimal.valueOf(100));
         List<CartItem> cartItemList = List.of(cartItem1, cartItem2);
-        when(cartItemRepository.findByCartId(any())).thenReturn(cartItemList);
+        when(cartItemService.findCartItemByCardId(any())).thenReturn(cartItemList);
 
         cartService.updateTotal(cart);
 
@@ -227,11 +194,11 @@ class CartServiceTest {
     }
 
     @Test
-    @DisplayName("should return message not fount cart of shopper")
-    public void shouldReturnMessageNotFoundCartOfShopper() {
+    @DisplayName("should throw cart not found")
+    public void shouldThrowNotFoundWhenCartIsEmpty() {
         String mockUsername = "TEST";
         when(cartRepository.findByShopper_name(mockUsername)).thenReturn(Optional.empty());
-        String expected = mockUsername + " not have any item in cart";
+        String expected = "Cart is empty";
 
         Exception actual =
                 assertThrows(

@@ -3,11 +3,14 @@ package com.kampus.kbazaar.cart;
 import com.kampus.kbazaar.cart.bodyReq.ProductDetailBody;
 import com.kampus.kbazaar.cartItem.CartItem;
 import com.kampus.kbazaar.cartItem.CartItemRepository;
+import com.kampus.kbazaar.cartItem.CartItemService;
 import com.kampus.kbazaar.exceptions.NotFoundException;
 import com.kampus.kbazaar.product.Product;
 import com.kampus.kbazaar.product.ProductRepository;
+import com.kampus.kbazaar.product.ProductService;
 import com.kampus.kbazaar.shopper.Shopper;
 import com.kampus.kbazaar.shopper.ShopperRepository;
+import com.kampus.kbazaar.shopper.ShopperService;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -20,6 +23,10 @@ public class CartService {
     private final ProductRepository productRepository;
     private final ShopperRepository shopperRepository;
     private final CartItemRepository cartItemRepository;
+    private final CartItemService cartItemService;
+    private final ProductService productService;
+
+    private final ShopperService shopperService;
 
     @Value("${enabled.feature.promotion.list.api}")
     private boolean featureToggle;
@@ -28,11 +35,17 @@ public class CartService {
             CartRepository cartRepository,
             ProductRepository productRepository,
             ShopperRepository shopperRepository,
-            CartItemRepository cartItemRepository) {
+            CartItemRepository cartItemRepository,
+            CartItemService cartItemService,
+            ProductService productService,
+            ShopperService shopperService) {
         this.cartRepository = cartRepository;
         this.productRepository = productRepository;
         this.shopperRepository = shopperRepository;
         this.cartItemRepository = cartItemRepository;
+        this.cartItemService = cartItemService;
+        this.productService = productService;
+        this.shopperService = shopperService;
     }
 
     public boolean getFeatureToggle() {
@@ -40,19 +53,8 @@ public class CartService {
     }
 
     public CartResponse addProductToCart(String userName, ProductDetailBody productDetailBody) {
-        Optional<Shopper> _shopper = this.shopperRepository.findByUsername(userName);
-        Optional<Product> _product =
-                this.productRepository.findById(productDetailBody.productSku());
-
-        if (_shopper.isEmpty()) {
-            throw new NotFoundException(userName + " is not member of Kbazaar");
-        }
-        if (_product.isEmpty()) {
-            throw new NotFoundException(productDetailBody.productSku() + " is not have in product");
-        }
-        Shopper shopper = _shopper.get();
-        Product product = _product.get();
-
+        Shopper shopper = this.shopperService.getByUsernames(userName);
+        Product product = this.productService.getProductById(productDetailBody.productSku());
         CartItem cartItem = new CartItem();
 
         Optional<Cart> _cartShopper = this.cartRepository.findByShopper_Id(shopper.getId());
@@ -112,7 +114,7 @@ public class CartService {
     }
 
     public void updateTotal(Cart cart) {
-        List<CartItem> cartItemList = this.cartItemRepository.findByCartId(cart.getId());
+        List<CartItem> cartItemList = this.cartItemService.findCartItemByCardId(cart.getId());
 
         BigDecimal total =
                 cartItemList.stream()
@@ -125,13 +127,13 @@ public class CartService {
     }
 
     public CartResponse getCartByUsername(String username) {
-        Cart cart =
-                this.cartRepository
-                        .findByShopper_name(username)
-                        .orElseThrow(
-                                () ->
-                                        new NotFoundException(
-                                                username + " not have any item in cart"));
+        Cart cart = findCart(username);
         return cart.toResponse();
+    }
+
+    public Cart findCart(String username) {
+        return this.cartRepository
+                .findByShopper_name(username)
+                .orElseThrow(() -> new NotFoundException("Cart is empty"));
     }
 }

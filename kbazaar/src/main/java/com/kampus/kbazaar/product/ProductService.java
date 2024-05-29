@@ -30,4 +30,16 @@ public class ProductService {
 
         return product.get().toResponse();
     }
+
+    public Product getProductBySku(String sku) {
+        return this.productRepository
+                .findBySku(sku)
+                .orElseThrow(() -> new NotFoundException("Not found this product"));
+    }
+
+    public Product getProductById(Long id) {
+        return this.productRepository
+                .findByProductId(id)
+                .orElseThrow(() -> new NotFoundException("Not found this product"));
+    }
 }

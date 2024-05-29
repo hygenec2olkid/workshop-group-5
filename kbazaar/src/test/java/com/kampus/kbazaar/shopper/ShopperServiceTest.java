@@ -102,4 +102,29 @@ class ShopperServiceTest {
         // Assertions
         assertThrows(NotFoundException.class, () -> shopperService.getByUsername("DataGuru"));
     }
+
+    @Test
+    @DisplayName("should return shopper")
+    void shouldReturnShopper() {
+        Shopper shopper = new Shopper();
+        shopper.setId(1L);
+
+        when(shopperRepository.findByUsername("test")).thenReturn(Optional.of(shopper));
+
+        Shopper actual = shopperService.getByUsernames("test");
+
+        assertEquals(1l, actual.getId());
+    }
+
+    @Test
+    @DisplayName("should throw not found shopper")
+    void shouldThrowNotFoundShopper() {
+
+        when(shopperRepository.findByUsername("test")).thenReturn(Optional.empty());
+
+        Exception actual =
+                assertThrows(NotFoundException.class, () -> shopperService.getByUsernames("test"));
+
+        assertEquals("Shopper not found", actual.getMessage());
+    }
 }

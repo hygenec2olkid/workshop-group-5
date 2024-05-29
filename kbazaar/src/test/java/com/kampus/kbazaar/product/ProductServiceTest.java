@@ -147,4 +147,60 @@ class ProductServiceTest {
         // Assertions
         assertThrows(NotFoundException.class, () -> productService.getBySku("NonExistingSKU"));
     }
+
+    @Test
+    @DisplayName("test get product by sku")
+    void shouldReturnProductBySku() {
+        Product product = new Product();
+        product.setId(1L);
+        product.setName("TEST_NAME");
+        product.setPrice(BigDecimal.TEN);
+        product.setSku("TEST_SKU");
+        product.setQuantity(10);
+
+        when(productRepository.findBySku("TEST_SKU")).thenReturn(Optional.of(product));
+
+        Product actual = productService.getProductBySku("TEST_SKU");
+
+        assertEquals("TEST_NAME", actual.getName());
+        assertEquals(BigDecimal.TEN, actual.getPrice());
+        assertEquals("TEST_SKU", actual.getSku());
+        assertEquals(10, actual.getQuantity());
+    }
+
+    @Test
+    @DisplayName("test get product by id")
+    void shouldReturnProductById() {
+        Product product = new Product();
+        product.setId(1L);
+        product.setName("TEST_NAME");
+        product.setPrice(BigDecimal.TEN);
+        product.setSku("TEST_SKU");
+        product.setQuantity(10);
+
+        when(productRepository.findByProductId(1L)).thenReturn(Optional.of(product));
+
+        Product actual = productService.getProductById(1L);
+
+        assertEquals("TEST_NAME", actual.getName());
+        assertEquals(BigDecimal.TEN, actual.getPrice());
+        assertEquals("TEST_SKU", actual.getSku());
+        assertEquals(10, actual.getQuantity());
+    }
+
+    @Test
+    @DisplayName("should throw Not found product")
+    void shouldThrowNotFoundProduct() {
+        when(productRepository.findBySku("TEST_SKU")).thenReturn(Optional.empty());
+        when(productRepository.findByProductId(1L)).thenReturn(Optional.empty());
+
+        Exception actual1 =
+                assertThrows(
+                        NotFoundException.class, () -> productService.getProductBySku("TEST_SKU"));
+        Exception actual2 =
+                assertThrows(NotFoundException.class, () -> productService.getProductById(1L));
+
+        assertEquals("Not found this product", actual1.getMessage());
+        assertEquals("Not found this product", actual2.getMessage());
+    }
 }
